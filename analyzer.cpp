@@ -16,15 +16,16 @@ Analyzer::~Analyzer()
 
 void Analyzer::soundinput(unsigned char *buffer, int size)
 {
-    int i;
+    int i, k;
     static int j = 0;
-    unsigned short s;
+    short s;
+    int b;
     for(i = 0; i < size; i+=2, j++)
     {
         s = buffer[i] | buffer[i+1] << 8;
-        printf("%04X ", s);
-        if(j%16 == 0)
-           printf("\n");
+        printf("%04X", (unsigned short)s);
+        if(j%27 == 0)
+            printf("\n");
     }
 }
 

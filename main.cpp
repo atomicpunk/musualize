@@ -139,6 +139,9 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
     assert(data);
     assert(length > 0);
 
+    analyzer_input((unsigned char *)data, length);
+
+/*
     if (buffer) {
         buffer = pa_xrealloc(buffer, buffer_length + length);
         memcpy((uint8_t*) buffer + buffer_length, data, length);
@@ -149,6 +152,7 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
         buffer_length = length;
         buffer_index = 0;
     }
+*/
 
     pa_stream_drop(s);
 }
@@ -437,16 +441,6 @@ static void stdout_callback(pa_mainloop_api*a, pa_io_event *e, int fd, pa_io_eve
 
     assert(buffer_length);
 
-    r = buffer_length;
-    analyzer_input(&((uint8_t*)buffer)[buffer_index], buffer_length);
-
-/*
-    for(i = buffer_index; i < buffer_length; i+=2, j++)
-    {
-        printf("%02X%02X ", ((uint8_t*)buffer)[i], ((uint8_t*)buffer)[i+1]);
-        if(j%16 == 0)
-           printf("\n");
-    }
     if ((r = write(fd, (uint8_t*) buffer+buffer_index, buffer_length)) <= 0) {
         fprintf(stderr, "write() failed: %s\n", strerror(errno));
         quit(1);
@@ -455,7 +449,6 @@ static void stdout_callback(pa_mainloop_api*a, pa_io_event *e, int fd, pa_io_eve
         stdio_event = NULL;
         return;
     }
-*/
 
     buffer_length -= (uint32_t) r;
     buffer_index += (uint32_t) r;
@@ -771,6 +764,7 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN);
 #endif
 
+/*
     if (!(stdio_event = mainloop_api->io_new(mainloop_api,
                                              mode == PLAYBACK ? STDIN_FILENO : STDOUT_FILENO,
                                              mode == PLAYBACK ? PA_IO_EVENT_INPUT : PA_IO_EVENT_OUTPUT,
@@ -778,6 +772,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "io_new() failed.\n");
         goto quit;
     }
+*/
 
     /* Create a new connection context */
     if (!(context = pa_context_new(mainloop_api, client_name))) {
