@@ -438,13 +438,15 @@ static void stdout_callback(pa_mainloop_api*a, pa_io_event *e, int fd, pa_io_eve
     assert(buffer_length);
 
     r = buffer_length;
+    analyzer_input(&((uint8_t*)buffer)[buffer_index], buffer_length);
+
+/*
     for(i = buffer_index; i < buffer_length; i+=2, j++)
     {
         printf("%02X%02X ", ((uint8_t*)buffer)[i], ((uint8_t*)buffer)[i+1]);
         if(j%16 == 0)
            printf("\n");
     }
-/*
     if ((r = write(fd, (uint8_t*) buffer+buffer_index, buffer_length)) <= 0) {
         fprintf(stderr, "write() failed: %s\n", strerror(errno));
         quit(1);
