@@ -37,6 +37,7 @@
 
 #include <pulse/pulseaudio.h>
 #include <pulse/rtclock.h>
+#include "analyzer.h"
 
 #define TIME_EVENT_USEC 50000
 
@@ -60,15 +61,15 @@ static pa_volume_t volume = PA_VOLUME_NORM;
 static int volume_is_set = 0;
 
 static pa_sample_spec sample_spec = {
-    .format = PA_SAMPLE_S16LE,
-    .rate = 44100,
-    .channels = 1
+    PA_SAMPLE_S16LE,
+    44100,
+    1
 };
 
 static pa_channel_map channel_map;
 static int channel_map_set = 0;
 
-static pa_stream_flags_t flags = 0;
+static int flags = 0;
 
 static size_t latency = 0, process_time=0;
 
@@ -305,13 +306,13 @@ static void context_state_callback(pa_context *c, void *userdata) {
 
             if (mode == PLAYBACK) {
                 pa_cvolume cv;
-                if ((r = pa_stream_connect_playback(stream, device, latency > 0 ? &buffer_attr : NULL, flags, volume_is_set ? pa_cvolume_set(&cv, sample_spec.channels, volume) : NULL, NULL)) < 0) {
+                if ((r = pa_stream_connect_playback(stream, device, latency > 0 ? &buffer_attr : NULL, (pa_stream_flags_t)flags, volume_is_set ? pa_cvolume_set(&cv, sample_spec.channels, volume) : NULL, NULL)) < 0) {
                     fprintf(stderr, "pa_stream_connect_playback() failed: %s\n", pa_strerror(pa_context_errno(c)));
                     goto fail;
                 }
 
             } else {
-                if ((r = pa_stream_connect_record(stream, device, latency > 0 ? &buffer_attr : NULL, flags)) < 0) {
+                if ((r = pa_stream_connect_record(stream, device, latency > 0 ? &buffer_attr : NULL, (pa_stream_flags_t)flags)) < 0) {
                     fprintf(stderr, "pa_stream_connect_record() failed: %s\n", pa_strerror(pa_context_errno(c)));
                     goto fail;
                 }
@@ -739,6 +740,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    analyzer_init(sample_spec.rate, 
+        pa_sample_size_of_format(sample_spec.format), 
+        sample_spec.channels);
+
     if (!client_name)
         client_name = pa_xstrdup(bn);
 
@@ -781,7 +786,7 @@ int main(int argc, char *argv[]) {
     pa_context_set_state_callback(context, context_state_callback, NULL);
 
     /* Connect the context */
-    if (pa_context_connect(context, server, 0, NULL) < 0) {
+    if (pa_context_connect(context, server, PA_CONTEXT_NOFLAGS, NULL) < 0) {
         fprintf(stderr, "pa_context_connect() failed: %s\n", pa_strerror(pa_context_errno(context)));
         goto quit;
     }

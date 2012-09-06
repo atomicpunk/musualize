@@ -5,7 +5,11 @@ INCLUDES= \
 bin_PROGRAMS=musualizer
 
 musualizer_SOURCES =	\
-	main.c
+        analyzer.h      \
+        analyzer.cpp      \
+        goertzel.h      \
+        goertzel.cpp    \
+	main.cpp
 
 musualizer_LDADD = \
 	$(GLIB_LIBS) \
