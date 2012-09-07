@@ -90,12 +90,14 @@ void Analyzer::soundinput(unsigned char *data, int size)
     transform_idx = (transform_idx - N < 0)?0:(transform_idx - N);
     if(BUFFER_SIZE - transform_idx >= TRANSFORM_SIZE)
     {
+/*
         for(i = 33; i < 69; i++)
         {
             printf("%3s", note[i%12]);
         }
         printf("\n");
-        for(i = 33; i < 69; i++)
+*/
+        for(i = 10; i < 81; i++)
         {
             N = detectTone(&buffer[transform_idx], TRANSFORM_SIZE, notes[i]);
             printf("%3d", N);
