@@ -2,6 +2,74 @@
 #include <string.h>
 #include "analyzer.h"
 #include <math.h>
+#define RESET		0
+#define BRIGHT 		1
+#define DIM		2
+#define UNDERLINE 	3
+#define BLINK		4
+#define REVERSE		7
+#define HIDDEN		8
+
+#define BLACK 		0
+#define RED		1
+#define GREEN		2
+#define YELLOW		3
+#define BLUE		4
+#define MAGENTA		5
+#define CYAN		6
+#define	WHITE		7
+
+void textcolor(int attr, int fg)
+{
+    char command[13];
+
+    /* Command is the control command to the terminal */
+//    sprintf(command, "%c[%d;%d;%dm", 0x1B, attr, fg + 30, bg + 40);
+    sprintf(command, "%c[%d;%dm", 0x1B, attr, fg + 30);
+    printf("%s", command);
+}
+
+void textcolor(int N)
+{
+    int attr, fg;
+
+    if(N < 1)
+    {
+        attr = HIDDEN;
+        fg = WHITE;
+    }
+    else if(N < 20)
+    {
+        attr = BRIGHT;
+        fg = BLUE;
+    }
+    else if(N < 40)
+    {
+        attr = BRIGHT;
+        fg = MAGENTA;
+    }
+    else if(N < 60)
+    {
+        attr = BRIGHT;
+        fg = CYAN;
+    }
+    else if(N < 80)
+    {
+        attr = BRIGHT;
+        fg = GREEN;
+    }
+    else if(N < 100)
+    {
+        attr = BRIGHT;
+        fg = YELLOW;
+    }
+    else
+    {
+        attr = BRIGHT;
+        fg = RED;
+    }
+    printf("%c[%d;%dm", 0x1B, attr, fg + 30);
+}
 
 Analyzer *analyzer = NULL;
 
@@ -13,7 +81,7 @@ float notes[] =
    130.8, 138.6, 146.8,	155.6, 164.8, 174.6, 185.0, 196.0, 207.7, 220.0, 233.1, 246.9, // OCT3
    261.6, 277.2, 293.7,	311.1, 329.6, 349.2, 370.0, 392.0, 415.3, 440.0, 466.2, 493.9, // OCT4
    523.3, 554.4, 587.3,	622.3, 659.3, 698.5, 740.0, 784.0, 830.6, 880.0, 932.3, 987.8, // OCT5
-    1047,  1109,  1175,	 1245,  1319,  1397,  1480,  1568,  1661,  1760,  1865,  1976, // OCT6
+    1047,  1109,  1175,	 1245.0, 1319.0,  1397,  1480,  1568,  1661,  1760,  1865,  1976, // OCT6
     2093,  2217,  2349,	 2489,  2637,  2794,  2960,  3136,  3322,  3520,  3729,  3951, // OCT7
     4186,  4435,  4699,	 4978,  5274,  5588,  5920,  6272,  6645,  7040,  7459,  7902  // OCT8
 };
@@ -33,17 +101,6 @@ Analyzer::~Analyzer()
 
 int Analyzer::detectTone(short *data, int N, float f)
 {
-#if 0
-    int i;
-    static int j = 0;
-
-    for(i = 0; i < N; i++, j++)
-    {
-        printf("%04X ", (unsigned short)data[i]);
-        if(j%16 == 0)
-            printf("\n");
-    }
-#else
     int i;
 
     float theta = 2.0 * M_PI * f / (float)samplerate;
@@ -60,7 +117,7 @@ int Analyzer::detectTone(short *data, int N, float f)
 
     for(i = 0; i < N; i++)
     {
-        y = data[i] + (realW*d1) - d2;
+        y = (float)data[i] + (realW*d1) - d2;
         d2 = d1;
         d1 = y;
     }
@@ -69,11 +126,24 @@ int Analyzer::detectTone(short *data, int N, float f)
     imag = imagW * d1;
     mag = sqrt((real*real) + (imag*imag));
     return (int)(mag/samplerate);
-#endif
 }
 
 void Analyzer::soundinput(unsigned char *data, int size)
 {
+#if 0
+    int i;
+    int N = size/samplesize;
+    static int j = 0;
+    short s;
+
+    for(i = 0; i < N; i++, j++)
+    {
+        s = data[(i*2)] | data[(i*2)+1] << 8;
+        printf("%04X ", (unsigned short)s);
+        if(j%42 == 0)
+            printf("\n");
+    }
+#else
     int i, idx = 0, N=size/samplesize;
 
     if(N < BUFFER_SIZE)
@@ -91,7 +161,8 @@ void Analyzer::soundinput(unsigned char *data, int size)
     if(BUFFER_SIZE - transform_idx >= TRANSFORM_SIZE)
     {
 /*
-        for(i = 33; i < 69; i++)
+        textcolor(RESET, WHITE);
+        for(i = 10; i < 81; i++)
         {
             printf("%3s", note[i%12]);
         }
@@ -100,11 +171,14 @@ void Analyzer::soundinput(unsigned char *data, int size)
         for(i = 10; i < 81; i++)
         {
             N = detectTone(&buffer[transform_idx], TRANSFORM_SIZE, notes[i]);
+            textcolor(N);
             printf("%3d", N);
         }
         printf("\n");
         transform_idx += TRANSFORM_SIZE;
+        textcolor(RESET, WHITE);
     }
+#endif
 }
 
 void analyzer_input(unsigned char *buffer, int size)
