@@ -73,6 +73,8 @@ static int flags = 0;
 
 static size_t latency = 0, process_time=0;
 
+Analyzer *analyzer = NULL;
+
 /* A shortcut for terminating the application */
 static void quit(int ret) {
     assert(mainloop_api);
@@ -139,7 +141,7 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
     assert(data);
     assert(length > 0);
 
-    analyzer_input((unsigned char *)data, length);
+    analyzer->soundinput((unsigned char *)data, length);
 
 /*
     if (buffer) {
@@ -549,7 +551,7 @@ enum {
 int main(int argc, char *argv[]) {
     pa_mainloop* m = NULL;
     int ret = 1, r, c;
-    char *bn, *server = NULL;
+    char *bn, *server = NULL, *window = NULL, *tonemap = NULL;
     pa_time_event *time_event = NULL;
 
     static const struct option long_options[] = {
@@ -574,6 +576,8 @@ int main(int argc, char *argv[]) {
         {"no-remix",     0, NULL, ARG_NO_REMIX},
         {"latency",      1, NULL, ARG_LATENCY},
         {"process-time", 1, NULL, ARG_PROCESS_TIME},
+        {"window",       1, NULL, 'w'},
+        {"tonemap",      1, NULL, 't'},
         {NULL,           0, NULL, 0}
     };
 
@@ -582,7 +586,7 @@ int main(int argc, char *argv[]) {
     else
         bn++;
 
-    while ((c = getopt_long(argc, argv, "rpd:s:n:hv", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "rpd:s:n:hvw:t:", long_options, NULL)) != -1) {
 
         switch (c) {
             case 'h' :
@@ -688,6 +692,29 @@ int main(int argc, char *argv[]) {
                     goto quit;
                 }
                 break;
+            case 'w':
+                if(!strcmp(optarg, "hamming")||!strcmp(optarg, "blackman"))
+                {
+                    window = pa_xstrdup(optarg);
+                }
+                else
+                {
+                    fprintf(stderr, "%s is not a valid window algorithm\n", optarg);
+                    goto quit;
+                }
+                break;
+
+            case 't':
+                if(Analyzer::tonemap(optarg))
+                {
+                    tonemap = pa_xstrdup(optarg);
+                }
+                else
+                {
+                    fprintf(stderr, "%s is not a valid tone mapping\n", optarg);
+                    goto quit;
+                }
+                break;
 
             default:
                 goto quit;
@@ -735,9 +762,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    analyzer_init(sample_spec.rate, 
-        pa_sample_size_of_format(sample_spec.format), 
-        sample_spec.channels);
+    analyzer = Analyzer::analyzer_init(sample_spec.rate,
+        pa_sample_size_of_format(sample_spec.format),
+        sample_spec.channels, window, tonemap);
 
     if (!client_name)
         client_name = pa_xstrdup(bn);
