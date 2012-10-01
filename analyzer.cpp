@@ -20,20 +20,6 @@
 #define	WHITE		7
 
 Analyzer *analyzer = NULL;
-
-float notes[] =
-{/*  C     C#      D     Eb      E      F     F#      G     G#      A     Bb      B    */
-   16.35, 17.32, 18.35,	19.45, 20.60, 21.83, 23.12, 24.50, 25.96, 27.50, 29.14, 30.87, // OCT0
-   32.70, 34.65, 36.71,	38.89, 41.20, 43.65, 46.25, 49.00, 51.91, 55.00, 58.27, 61.74, // OCT1
-   65.41, 69.30, 73.42,	77.78, 82.41, 87.31, 92.50, 98.00, 103.8, 110.0, 116.5, 123.5, // OCT2
-   130.8, 138.6, 146.8,	155.6, 164.8, 174.6, 185.0, 196.0, 207.7, 220.0, 233.1, 246.9, // OCT3
-   261.6, 277.2, 293.7,	311.1, 329.6, 349.2, 370.0, 392.0, 415.3, 440.0, 466.2, 493.9, // OCT4
-   523.3, 554.4, 587.3,	622.3, 659.3, 698.5, 740.0, 784.0, 830.6, 880.0, 932.3, 987.8, // OCT5
-    1047,  1109,  1175,	 1245.0, 1319.0,  1397,  1480,  1568,  1661,  1760,  1865,  1976, // OCT6
-    2093,  2217,  2349,	 2489,  2637,  2794,  2960,  3136,  3322,  3520,  3729,  3951, // OCT7
-    4186,  4435,  4699,	 4978,  5274,  5588,  5920,  6272,  6645,  7040,  7459,  7902  // OCT8
-};
-
 char note[12][3] = {"C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"};
 
 Tone::Tone(float f, int samplerate) :
@@ -73,10 +59,21 @@ Tone::~Tone()
 Analyzer::Analyzer(int r, int t, int n) :
     samplerate(r), samplesize(t), numchannels(n)
 {
-    int i;
+    int i, j, oct = 10;
+    double f, df = pow(2.0, 1.0/12.0);
     transform_idx = BUFFER_SIZE;
-    for(i = 0; i < 108; i++)
-        tones[i] = new Tone(notes[i], r);
+    numtones = oct*12;
+    idx1 = 0;
+    idx2 = 120;
+    tones = new Tone*[numtones];
+
+    for(i = 0, f = 27.5; i < oct; i++, f*=2)
+    {
+        for(j = -9; j < 3; j++)
+        {
+            tones[(i*12)+j+9] = new Tone(f*pow(df, j), r);
+        }
+    }
 }
 
 Analyzer::~Analyzer()
@@ -193,14 +190,14 @@ void Analyzer::soundinput(unsigned char *data, int size)
     {
 /*
         textcolor(RESET, WHITE);
-        for(i = 10; i < 81; i++)
+        for(i = idx1; i < idx2; i++)
         {
             printf("%3s", note[i%12]);
         }
         printf("\n");
 */
-        detectTones(&buffer[transform_idx], TRANSFORM_SIZE, 10, 81);
-        for(i = 10; i < 81; i++)
+        detectTones(&buffer[transform_idx], TRANSFORM_SIZE, idx1, idx2);
+        for(i = idx1; i < idx2; i++)
         {
             idx = (int)(tones[i]->magnitude()/samplerate);
             textcolor(idx);

@@ -29,7 +29,10 @@ public:
 
     void soundinput(unsigned char *data, int size);
 private:
-    Tone *tones[108];
+    Tone **tones;
+    int numtones;
+    int idx1;
+    int idx2;
     void textcolor(int attr, int fg);
     void textcolor(int N);
     int detectTone(short *data, int N, Tone *t);
