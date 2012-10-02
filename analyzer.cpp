@@ -39,6 +39,8 @@ Tone::Tone(float f, int samplerate, char *w) :
         window = 0.426591 - (.496561*cos(theta)) + (.076848*cos(2.0*theta));
         scale /= 60;
     }
+    scnt = 1000;
+    sidx = scnt;
     reset();
 }
 
@@ -62,6 +64,16 @@ void Tone::iteration(float s)
     y = ws + (realW*d1) - d2;
     d2 = d1;
     d1 = y;
+}
+
+int Tone::detect(short *data)
+{
+    reset();
+    for(int i = 0; i < scnt; i++)
+    {
+        iteration((float)data[i]);
+    }
+    return (int)(magnitude());
 }
 
 Tone::~Tone()
@@ -241,6 +253,7 @@ void Analyzer::soundinput(unsigned char *data, int size)
     }
 #else
     int i, idx = 0, N=size/samplesize;
+    bool ready = false;
 
     if(N < BUFFER_SIZE)
     {
@@ -253,20 +266,24 @@ void Analyzer::soundinput(unsigned char *data, int size)
         buffer[idx] = data[(i*2)] | data[(i*2)+1] << 8;
     }
 
-    transform_idx = (transform_idx - N < 0)?0:(transform_idx - N);
-    if(BUFFER_SIZE - transform_idx >= TRANSFORM_SIZE)
+    for(i = 0; i < numtones; i++)
     {
-        detectTones(&buffer[transform_idx], TRANSFORM_SIZE, 0, numtones);
-        for(i = 0; i < numtones; i++)
+        tones[i]->sidx = (tones[i]->sidx - N < 0)?0:(tones[i]->sidx - N);
+        if(BUFFER_SIZE - tones[i]->sidx >= tones[i]->scnt)
         {
-            idx = (int)(tones[i]->magnitude());
+            idx = tones[i]->detect(&buffer[tones[i]->sidx]);
             textcolor(idx);
             printf("%3d", idx);
+            tones[i]->sidx += tones[i]->scnt;
+            ready = true;
         }
+    }
+    if(ready)
+    {
         printf("\n");
         textcolor(RESET, WHITE);
-        transform_idx += TRANSFORM_SIZE;
     }
+
 #endif
 }
 

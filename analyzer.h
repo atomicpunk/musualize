@@ -1,13 +1,23 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-#define TRANSFORM_SIZE 1000
-#define BUFFER_SIZE (TRANSFORM_SIZE+500)
+#define BUFFER_SIZE 2000
 
 class Tone {
 public:
     Tone(float f, int samplerate, char *window);
     ~Tone();
+
+    float magnitude();
+    void reset();
+    void iteration(float s);
+    int detect(short *data);
+
+    /* used by analyzer to manage buffering */
+    int scnt;
+    int sidx;
+
+private:
     float freq;
     float realW;
     float imagW;
@@ -16,9 +26,6 @@ public:
     float y;
     float window;
     float scale;
-    float magnitude();
-    void reset();
-    void iteration(float s);
 };
 
 class Analyzer {
