@@ -21,8 +21,6 @@
 #define CYAN		6
 #define	WHITE		7
 
-char note[12][3] = {"C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"};
-
 Tone::Tone(float f, int samplerate, char *w) :
     freq(f)
 {
@@ -107,7 +105,7 @@ Analyzer::~Analyzer()
 
 }
 
-bool Analyzer::tonemap(char *tmap, int *div, int *start, int *count)
+bool Analyzer::tonemap(const char *tmap, int *div, int *start, int *count)
 {
     if(tmap == NULL)
        return false;
@@ -258,14 +256,6 @@ void Analyzer::soundinput(unsigned char *data, int size)
     transform_idx = (transform_idx - N < 0)?0:(transform_idx - N);
     if(BUFFER_SIZE - transform_idx >= TRANSFORM_SIZE)
     {
-/*
-        textcolor(RESET, WHITE);
-        for(i = 0; i < numtones; i++)
-        {
-            printf("%3s", note[i%12]);
-        }
-        printf("\n");
-*/
         detectTones(&buffer[transform_idx], TRANSFORM_SIZE, 0, numtones);
         for(i = 0; i < numtones; i++)
         {

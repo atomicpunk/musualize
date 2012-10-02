@@ -30,7 +30,7 @@ public:
     static Analyzer* analyzer_init(int samplerate, int samplesize, int numchannels, 
                                    char *window, char *tonemap);
     void soundinput(unsigned char *data, int size);
-    static bool tonemap(char *map, int *div=NULL, int *start=NULL, int *count=NULL);
+    static bool tonemap(const char *map, int *div=NULL, int *start=NULL, int *count=NULL);
 private:
     Tone **tones;
     int numtones;
