@@ -1,8 +1,8 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-#define BUFFER_SIZE 1500
 #define TRANSFORM_SIZE 1000
+#define BUFFER_SIZE (TRANSFORM_SIZE+500)
 
 class Tone {
 public:

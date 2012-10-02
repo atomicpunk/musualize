@@ -74,7 +74,12 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     samplerate(r), samplesize(t), numchannels(n)
 {
     int i, j, idx1, idx2, tdiv, tnum;
-    tonemap(m, &tdiv, &idx1, &idx2);
+
+    if(m)
+      tonemap(m, &tdiv, &idx1, &idx2);
+    else
+      tonemap("1:0:-1", &tdiv, &idx1, &idx2);
+
     double f, df = pow(2.0, 1.0/(12.0*tdiv));
     tnum = tdiv*120;
     double *notes = new double[tnum];
