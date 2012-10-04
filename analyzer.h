@@ -1,7 +1,8 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-#define BUFFER_SIZE 2000
+#define OUTPUT_DELAY_MSEC 10
+#define WAVELENGTHS 8
 
 class Tone {
 public:
@@ -12,12 +13,17 @@ public:
     void reset();
     void iteration(float s);
     int detect(short *data);
+    void detectAverage(short *data);
+    int returnAverage();
 
     /* used by analyzer to manage buffering */
     int scnt;
     int sidx;
 
 private:
+    int avgsum;
+    int avgnum;
+    int avgval;
     float freq;
     float realW;
     float imagW;
@@ -37,6 +43,7 @@ public:
     static Analyzer* analyzer_init(int samplerate, int samplesize, int numchannels, 
                                    char *window, char *tonemap);
     void soundinput(unsigned char *data, int size);
+    void print();
     static bool tonemap(const char *map, int *div=NULL, int *start=NULL, int *count=NULL);
 private:
     Tone **tones;
@@ -48,7 +55,8 @@ private:
     int samplerate;
     int samplesize;
     int numchannels;
-    short buffer[BUFFER_SIZE];
+    short *buffer;
+    int buffer_size;
     int transform_idx;
 };
 

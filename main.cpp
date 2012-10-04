@@ -34,12 +34,11 @@
 #include <getopt.h>
 #include <fcntl.h>
 #include <locale.h>
+#include <sys/time.h>
 
 #include <pulse/pulseaudio.h>
 #include <pulse/rtclock.h>
 #include "analyzer.h"
-
-#define TIME_EVENT_USEC 50000
 
 #define CLEAR_LINE "\x1B[K"
 
@@ -64,6 +63,11 @@ static pa_sample_spec sample_spec = {
     PA_SAMPLE_S16LE,
     44100,
     1
+};
+
+static struct itimerval output_timer = {
+    {OUTPUT_DELAY_MSEC/1000, (OUTPUT_DELAY_MSEC*1000)%1000000},
+    {OUTPUT_DELAY_MSEC/1000, (OUTPUT_DELAY_MSEC*1000)%1000000}
 };
 
 static pa_channel_map channel_map;
@@ -157,6 +161,10 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
 */
 
     pa_stream_drop(s);
+}
+
+static void output_callback() {
+    analyzer->print();
 }
 
 /* This routine is called whenever the stream state changes */
@@ -784,6 +792,15 @@ int main(int argc, char *argv[]) {
     assert(r == 0);
     pa_signal_new(SIGINT, exit_signal_callback, NULL);
     pa_signal_new(SIGTERM, exit_signal_callback, NULL);
+    if (signal(SIGALRM, (void (*)(int))output_callback) == SIG_ERR) {
+        fprintf(stderr, "Unable to catch SIGALRM");
+        goto quit;
+    }
+    if (setitimer(ITIMER_REAL, &output_timer, NULL) == -1) {
+        fprintf(stderr, "error calling setitimer()");
+        goto quit;
+    }
+
 #ifdef SIGUSR1
     pa_signal_new(SIGUSR1, sigusr1_signal_callback, NULL);
 #endif

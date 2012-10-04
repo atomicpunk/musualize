@@ -39,8 +39,11 @@ Tone::Tone(float f, int samplerate, char *w) :
         window = 0.426591 - (.496561*cos(theta)) + (.076848*cos(2.0*theta));
         scale /= 60;
     }
-    scnt = 1000;
+    scnt = (int)(WAVELENGTHS * (float)samplerate / f);
     sidx = scnt;
+    avgsum = 0;
+    avgnum = 0;
+    avgval = 0;
     reset();
 }
 
@@ -76,6 +79,23 @@ int Tone::detect(short *data)
     return (int)(magnitude());
 }
 
+void Tone::detectAverage(short *data)
+{
+    avgsum += detect(data);
+    avgnum++;
+}
+
+int Tone::returnAverage()
+{
+    if(avgnum > 0)
+    {
+        avgval = avgsum / avgnum;
+        avgsum = 0;
+        avgnum = 0;
+    }
+    return avgval;
+}
+
 Tone::~Tone()
 {
 }
@@ -93,7 +113,10 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     double f, df = pow(2.0, 1.0/(12.0*tdiv));
     tnum = tdiv*120;
     double *notes = new double[tnum];
-    transform_idx = BUFFER_SIZE;
+    buffer_size = WAVELENGTHS*(r/1600)*100;
+    printf("BUFFERSIZE = %d\n", buffer_size);
+    buffer = new short[buffer_size];
+    transform_idx = buffer_size;
 
     for(i = 0, f = 27.5; i < 10; i++, f*=2)
     {
@@ -114,7 +137,13 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
 
 Analyzer::~Analyzer()
 {
-
+    int i;
+    for(i = 0; i < numtones; i++)
+    {
+        delete tones[i];
+    }
+    delete tones;
+    delete buffer;
 }
 
 bool Analyzer::tonemap(const char *tmap, int *div, int *start, int *count)
@@ -133,12 +162,14 @@ bool Analyzer::tonemap(const char *tmap, int *div, int *start, int *count)
     if((v[0] < 1)||(v[0] > 8)||(v[1] < 0)||(v[2] < -1))
     {
         fprintf(stderr, "tonemap is <1:8>:<0:N-1>:<-1,1:N>");
+        free(map);
         return false;
     }
     t = v[0] * 120;
     if(v[1] >= t)
     {
         fprintf(stderr, "tonemap start is beyond the end of the array");
+        free(map);
         return false;
     }
 
@@ -149,6 +180,7 @@ bool Analyzer::tonemap(const char *tmap, int *div, int *start, int *count)
     if(v[2] > t)
     {
         fprintf(stderr, "tonemap count is beyond the end of the array");
+        free(map);
         return false;
     }
 
@@ -158,6 +190,7 @@ bool Analyzer::tonemap(const char *tmap, int *div, int *start, int *count)
         *start = v[1];
         *count = v[2];
     }
+    free(map);
     return true;
 }
 
@@ -253,15 +286,14 @@ void Analyzer::soundinput(unsigned char *data, int size)
     }
 #else
     int i, idx = 0, N=size/samplesize;
-    bool ready = false;
 
-    if(N < BUFFER_SIZE)
+    if(N < buffer_size)
     {
-        memmove(&buffer[0], &buffer[N], (BUFFER_SIZE-N)*samplesize);
-        idx = BUFFER_SIZE - N;
+        memmove(&buffer[0], &buffer[N], (buffer_size-N)*samplesize);
+        idx = buffer_size - N;
     }
 
-    for(i = 0; (i < N)&&(idx < BUFFER_SIZE); i++, idx++)
+    for(i = 0; (i < N)&&(idx < buffer_size); i++, idx++)
     {
         buffer[idx] = data[(i*2)] | data[(i*2)+1] << 8;
     }
@@ -269,22 +301,26 @@ void Analyzer::soundinput(unsigned char *data, int size)
     for(i = 0; i < numtones; i++)
     {
         tones[i]->sidx = (tones[i]->sidx - N < 0)?0:(tones[i]->sidx - N);
-        if(BUFFER_SIZE - tones[i]->sidx >= tones[i]->scnt)
+        if(buffer_size - tones[i]->sidx >= tones[i]->scnt)
         {
-            idx = tones[i]->detect(&buffer[tones[i]->sidx]);
-            textcolor(idx);
-            printf("%3d", idx);
+            tones[i]->detectAverage(&buffer[tones[i]->sidx]);
             tones[i]->sidx += tones[i]->scnt;
-            ready = true;
         }
     }
-    if(ready)
-    {
-        printf("\n");
-        textcolor(RESET, WHITE);
-    }
-
 #endif
+}
+
+void Analyzer::print()
+{
+    int i, f;
+    for(i = 0; i < numtones; i++)
+    {
+        f = tones[i]->returnAverage();
+        textcolor(f);
+        printf("%3d", f);
+    }
+    printf("\n");
+    textcolor(RESET, WHITE);
 }
 
 Analyzer* Analyzer::analyzer_init(int samplerate, int samplesize,
