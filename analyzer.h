@@ -2,7 +2,7 @@
 #define ANALYZER_H
 
 #define OUTPUT_DELAY_MSEC 10
-#define WAVELENGTHS 8
+#define WAVELENGTHS 16
 
 class Tone {
 public:

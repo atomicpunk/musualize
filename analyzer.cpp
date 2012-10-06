@@ -28,7 +28,13 @@ Tone::Tone(float f, int samplerate, char *w) :
     realW = 2.0*cos(theta);
     imagW = sin(theta);
     window = 0;
-    scale = samplerate;
+    scnt = (int)(WAVELENGTHS * (float)samplerate / f);
+    sidx = scnt;
+    avgsum = 0;
+    avgnum = 0;
+    avgval = 0;
+
+    scale = scnt*50;
     if((w)&&!strcmp(w, "hamming"))
     {
         window = 0.54 - (0.46 * cos(theta));
@@ -39,11 +45,6 @@ Tone::Tone(float f, int samplerate, char *w) :
         window = 0.426591 - (.496561*cos(theta)) + (.076848*cos(2.0*theta));
         scale /= 60;
     }
-    scnt = (int)(WAVELENGTHS * (float)samplerate / f);
-    sidx = scnt;
-    avgsum = 0;
-    avgnum = 0;
-    avgval = 0;
     reset();
 }
 
