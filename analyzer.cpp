@@ -302,7 +302,7 @@ void Analyzer::soundinput(unsigned char *data, int size)
     for(i = 0; i < numtones; i++)
     {
         tones[i]->sidx = (tones[i]->sidx - N < 0)?0:(tones[i]->sidx - N);
-        if(buffer_size - tones[i]->sidx >= tones[i]->scnt)
+        while(buffer_size - tones[i]->sidx >= tones[i]->scnt)
         {
             tones[i]->detectAverage(&buffer[tones[i]->sidx]);
             tones[i]->sidx += tones[i]->scnt;
