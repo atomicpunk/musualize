@@ -129,6 +129,7 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
 
     numtones = idx2 - idx1;
     tones = new Tone*[numtones];
+    spectrum = new int[numtones];
     for(i = idx1; i < idx2; i++)
     {
         tones[i-idx1] = new Tone(notes[i], r, w);
@@ -145,6 +146,7 @@ Analyzer::~Analyzer()
     }
     delete tones;
     delete buffer;
+    delete spectrum;
 }
 
 bool Analyzer::tonemap(const char *tmap, int *div, int *start, int *count)
@@ -311,20 +313,27 @@ void Analyzer::soundinput(unsigned char *data, int size)
 #endif
 }
 
+void Analyzer::snapshot()
+{
+    for(int i = 0; i < numtones; i++)
+    {
+        spectrum[i] = tones[i]->returnAverage();
+    }
+}
+
 void Analyzer::print()
 {
-    int i, f;
-    for(i = 0; i < numtones; i++)
+    snapshot();
+    for(int i = 0; i < numtones; i++)
     {
-        f = tones[i]->returnAverage();
-        textcolor(f);
-        printf("%3d", f);
+        textcolor(spectrum[i]);
+        printf("%3d", spectrum[i]);
     }
     printf("\n");
     textcolor(RESET, WHITE);
 }
 
-Analyzer* Analyzer::analyzer_init(int samplerate, int samplesize,
+Analyzer* Analyzer::create(int samplerate, int samplesize,
                    int numchannels, char *window, char *tonemap)
 {
     if((samplesize != 2)||(numchannels != 1))

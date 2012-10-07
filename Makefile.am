@@ -6,9 +6,9 @@ bin_PROGRAMS=musualizer
 
 musualizer_SOURCES =	\
         analyzer.h      \
-        analyzer.cpp      \
-        goertzel.h      \
-        goertzel.cpp    \
+        analyzer.cpp    \
+        display.h       \
+        display.cpp     \
 	main.cpp
 
 musualizer_LDADD = \

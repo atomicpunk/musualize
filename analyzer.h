@@ -1,8 +1,8 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-#define OUTPUT_DELAY_MSEC 10
-#define WAVELENGTHS 16
+#define OUTPUT_DELAY_MSEC 5
+#define WAVELENGTHS 32
 
 class Tone {
 public:
@@ -36,18 +36,23 @@ private:
 
 class Analyzer {
 public:
-    Analyzer(int samplerate, int samplesize, int numchannels, 
+    Analyzer(int samplerate, int samplesize, int numchannels,
              char *window=NULL, char *tonemap=NULL);
     ~Analyzer();
 
-    static Analyzer* analyzer_init(int samplerate, int samplesize, int numchannels, 
-                                   char *window, char *tonemap);
+    static Analyzer* create(int samplerate, int samplesize,
+                            int numchannels, char *window,
+                            char *tonemap);
     void soundinput(unsigned char *data, int size);
     void print();
-    static bool tonemap(const char *map, int *div=NULL, int *start=NULL, int *count=NULL);
+    void snapshot();
+    static bool tonemap(const char *map, int *div=NULL,
+                        int *start=NULL, int *count=NULL);
+
+    int *spectrum;
+    int numtones;
 private:
     Tone **tones;
-    int numtones;
     void textcolor(int attr, int fg);
     void textcolor(int N);
     int detectTone(short *data, int N, Tone *t);

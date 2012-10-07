@@ -39,6 +39,7 @@
 #include <pulse/pulseaudio.h>
 #include <pulse/rtclock.h>
 #include "analyzer.h"
+#include "display.h"
 
 #define CLEAR_LINE "\x1B[K"
 
@@ -78,6 +79,7 @@ static int flags = 0;
 static size_t latency = 0, process_time=0;
 
 Analyzer *analyzer = NULL;
+Display *display = NULL;
 
 /* A shortcut for terminating the application */
 static void quit(int ret) {
@@ -164,7 +166,9 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
 }
 
 static void output_callback() {
-    analyzer->print();
+//    analyzer->print();
+    analyzer->snapshot();
+    display->update(analyzer->spectrum, analyzer->numtones);
 }
 
 /* This routine is called whenever the stream state changes */
@@ -562,6 +566,8 @@ int main(int argc, char *argv[]) {
     char *bn, *server = NULL, *window = NULL, *tonemap = NULL;
     pa_time_event *time_event = NULL;
 
+    glutInit(&argc, argv);
+
     static const struct option long_options[] = {
         {"record",       0, NULL, 'r'},
         {"playback",     0, NULL, 'p'},
@@ -770,9 +776,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    analyzer = Analyzer::analyzer_init(sample_spec.rate,
+    analyzer = Analyzer::create(sample_spec.rate,
         pa_sample_size_of_format(sample_spec.format),
         sample_spec.channels, window, tonemap);
+    display = Display::create();
 
     if (!client_name)
         client_name = pa_xstrdup(bn);

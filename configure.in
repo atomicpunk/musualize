@@ -36,6 +36,8 @@ PKG_CHECK_MODULES(PULSE, libpulse >= 1.1 sndfile >= 1.0.20)
 AC_SUBST(PULSE_CFLAGS)
 AC_SUBST(PULSE_LIBS)
 
+AC_CHECK_LIB([glut], [glutInit])
+
 AC_CONFIG_FILES([
 Makefile
 ])
