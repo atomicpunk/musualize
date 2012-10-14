@@ -6,6 +6,7 @@
 #define WINDOW_WIDTH 1920
 #define WINDOW_X 0
 #define WINDOW_Y 0
+#define LINESIZE 4
 #define SMAX 200.0
 #define MAG(n) ((((float)(n)/SMAX)>1)?1:((float)(n)/SMAX))
 
@@ -29,7 +30,8 @@ void Display::update(int *spectrum, int size)
     glFlush();
     glutMainLoopEvent();
 
-    if(++y > WINDOW_HEIGHT) y = 0;
+    y+=LINESIZE;
+    if(y > WINDOW_HEIGHT) y = 0;
 }
 
 Display::Display()
@@ -40,7 +42,7 @@ Display::Display()
     glutCreateWindow("Musualizer Spectrum");
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    glLineWidth(1);
+    glLineWidth(LINESIZE);
     glutFullScreen();
     glutMainLoopEvent();
 }
