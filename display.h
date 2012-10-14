@@ -11,6 +11,7 @@ public:
     static Display* create();
     void update(int *spectrum, int size);
 private:
+    int ignore;
 };
 
 #endif //DISPLAY_H
