@@ -1,0 +1,12 @@
+#ifndef DEFINES_H
+#define DEFINES_H
+
+#define FSCALE 10
+//#define DISPLAYRATE 400
+#define OUTPUT_DELAY_MSEC 50
+#define WAVELENGTHS 64
+//#define LINESIZE (DISPLAYRATE*OUTPUT_DELAY_MSEC/1000)
+#define LINESIZE 10
+#define SMAX 30.0
+
+#endif //DEFINES_H

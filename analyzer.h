@@ -1,9 +1,6 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-#define OUTPUT_DELAY_MSEC 5
-#define WAVELENGTHS 16
-
 class Tone {
 public:
     Tone(float f, int samplerate, char *window);

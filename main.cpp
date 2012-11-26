@@ -38,6 +38,7 @@
 
 #include <pulse/pulseaudio.h>
 #include <pulse/rtclock.h>
+#include "defines.h"
 #include "analyzer.h"
 #include "display.h"
 

@@ -2,19 +2,17 @@
 #include "display.h"
 #include "GL/gl.h"
 #include "GL/glext.h"
-
+#include "defines.h"
 #define WINDOW_HEIGHT 1080
 #define WINDOW_WIDTH 1920
 #define WINDOW_X 0
 #define WINDOW_Y 0
-#define LINESIZE 4
-#define LINEY (((float)LINESIZE/(float)WINDOW_HEIGHT)-1)
-#define SMAX 200.0
+#define LINEY (((float)(2*LINESIZE)/(float)WINDOW_HEIGHT)-1.0)
 #define MAG(n) ((((float)(n)/SMAX)>1)?1:((float)(n)/SMAX))
 
 void Display::update(int *spectrum, int size)
 {
-    int i;
+    int i, j;
     float n, dx = 2.0/(float)size;
 
     if(ignore > 0)
@@ -29,7 +27,7 @@ void Display::update(int *spectrum, int size)
     for(i = 0; i < size; i++)
     {
         n = MAG(spectrum[i]);
-        glColor3f(n,n,n);
+        glColor3f(0,n,0);
         glVertex2f((i*dx)-1, -1);
         glVertex2f(((i+1)*dx)-1, -1);
     }
@@ -46,7 +44,7 @@ Display::Display()
     glutCreateWindow("Musualizer Spectrum");
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    glLineWidth(LINESIZE);
+    glLineWidth(LINESIZE*2);
     glutFullScreen();
     glutMainLoopEvent();
 }

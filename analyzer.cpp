@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include "defines.h"
 #include "analyzer.h"
 #include <math.h>
 #include <stdlib.h>
+
+// 0 = raw, 1 = avg, 2 = avg+raw
+#define DETECTION       2
+
 #define RESET		0
 #define BRIGHT 		1
 #define DIM		2
@@ -28,13 +33,28 @@ Tone::Tone(float f, int samplerate, char *w) :
     realW = 2.0*cos(theta);
     imagW = sin(theta);
     window = 0;
+#if (DETECTION == 2)
+    int ws = f*OUTPUT_DELAY_MSEC/1000;
+    if(ws > WAVELENGTHS) ws = WAVELENGTHS;
+    if(ws < 2)
+    {
+        scnt = (int)((float)samplerate / f);
+        scale = scnt*FSCALE*WAVELENGTHS/2;
+    }
+    else
+    {
+        scnt = (int)(ws * (float)samplerate / f);
+        scale = scnt*FSCALE*WAVELENGTHS/ws;
+    }
+#else
     scnt = (int)(WAVELENGTHS * (float)samplerate / f);
+    scale = scnt*FSCALE;
+#endif
     sidx = scnt;
     avgsum = 0;
     avgnum = 0;
     avgval = 0;
 
-    scale = scnt*50;
     if((w)&&!strcmp(w, "hamming"))
     {
         window = 0.54 - (0.46 * cos(theta));
@@ -274,7 +294,7 @@ void Analyzer::detectTones(short *data, int N, int start, int end)
 
 void Analyzer::soundinput(unsigned char *data, int size)
 {
-#if 0
+#if (DETECTION == 0)
     int i;
     int N = size/samplesize;
     static int j = 0;
@@ -287,7 +307,7 @@ void Analyzer::soundinput(unsigned char *data, int size)
         if(j%42 == 0)
             printf("\n");
     }
-#else
+#elif (DETECTION > 0)
     int i, idx = 0, N=size/samplesize;
 
     if(N < buffer_size)
@@ -301,6 +321,7 @@ void Analyzer::soundinput(unsigned char *data, int size)
         buffer[idx] = data[(i*2)] | data[(i*2)+1] << 8;
     }
 
+#if (DETECTION == 1)
     for(i = 0; i < numtones; i++)
     {
         tones[i]->sidx = (tones[i]->sidx - N < 0)?0:(tones[i]->sidx - N);
@@ -310,6 +331,17 @@ void Analyzer::soundinput(unsigned char *data, int size)
             tones[i]->sidx += tones[i]->scnt;
         }
     }
+#elif (DETECTION == 2)
+    for(i = 0; i < numtones; i++)
+    {
+        tones[i]->sidx = (tones[i]->sidx - N < 0)?0:(tones[i]->sidx - N);
+        while(buffer_size - tones[i]->sidx >= tones[i]->scnt)
+        {
+            tones[i]->detectAverage(&buffer[tones[i]->sidx]);
+            tones[i]->sidx += tones[i]->scnt;
+        }
+    }
+#endif
 #endif
 }
 
