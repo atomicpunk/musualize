@@ -8,19 +8,26 @@ Dn-1 = Data value 2 (represents frequency domain)
 Rn = 2cos(Fn/SF * 360deg)
 In =  sin(Fn/SF * 360deg)
 
-Iteration 0
-D1 = S(0)
-D2 = 0
-Iteration 1
-D1 = S(1) + S(0)*Rn
-D2 = S(0)
-Iteration 2
-D1 = S(2) + (S(1) + S(0)*Rn)*Rn - S(0)
-D2 = S(1) + S(0)*Rn
-Iteration 3
-D1 = S(3) + (S(2) + (S(1) + S(0)*Rn)*Rn - S(0))*Rn + (S(1) + S(0)*Rn)
-D2 = S(1) + S(0)*Rn
+D(0) = S(0)
+D(1) = S(1) + S(0)*Rn
+D(2) = S(2) + S(1)*Rn + S(0)*Rn*Rn - S(0)
+D(3) = S(3) + S(2)*Rn + S(1)*Rn*Rn + S(0)*Rn*Rn*Rn - S(0)*Rn - S(1) - S(0)*Rn
+D(4) = S(4) + S(3)*Rn + S(2)*Rn*Rn + S(1)*Rn*Rn*Rn + S(0)*Rn*Rn*Rn*Rn - S(0)*Rn*Rn - S(1)*Rn - S(0)*Rn*Rn - S(2) - S(1)*Rn - S(0)*Rn*Rn + S(0)
+
+D(4) = S(4) + S(3)*Rn + S(2)*(Rn^2 - 1) + S(1)*(Rn^3 - 2*Rn) + S(0)*(Rn^4 - 3*Rn^2 + 1)
+
 Iteration i
 D(i) = S(i) + Rn*D(i-1) - D(i-2)
 
 Y(i) = ((0.5 * Rn * D(i)) - D(i-1))^2 + (In * D(i))^2
+
+
+
+
+D(i) = S(i) + Rn*D(i-1) - D(i-2)
+
+
+
+Dn = 3*N*W adds + N*W mult
+
+     N*W adds + N*W mult

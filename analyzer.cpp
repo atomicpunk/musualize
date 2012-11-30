@@ -72,7 +72,6 @@ void Tone::reset()
 {
     d1 = 0;
     d2 = 0;
-    y = 0;
 }
 
 float Tone::magnitude()
@@ -84,8 +83,8 @@ float Tone::magnitude()
 
 void Tone::iteration(float s)
 {
-    float ws = (window > 0)?(window*s):s;
-    y = ws + (realW*d1) - d2;
+    //float ws = (window > 0)?(window*s):s;
+    float y = s + (realW*d1) - d2;
     d2 = d1;
     d1 = y;
 }

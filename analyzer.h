@@ -26,7 +26,6 @@ private:
     float imagW;
     float d1;
     float d2;
-    float y;
     float window;
     float scale;
 };
