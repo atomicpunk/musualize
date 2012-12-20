@@ -167,9 +167,12 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
 }
 
 static void output_callback() {
-//    analyzer->print();
+#ifdef DISPLAYASCII
+    analyzer->print();
+#else
     analyzer->snapshot();
-    display->update(analyzer->spectrum, analyzer->numtones);
+    display->update(analyzer->spectrum, analyzer->colors, analyzer->numtones);
+#endif
 }
 
 /* This routine is called whenever the stream state changes */
@@ -780,7 +783,9 @@ int main(int argc, char *argv[]) {
     analyzer = Analyzer::create(sample_spec.rate,
         pa_sample_size_of_format(sample_spec.format),
         sample_spec.channels, window, tonemap);
+    #ifndef DISPLAYASCII
     display = Display::create();
+    #endif
 
     if (!client_name)
         client_name = pa_xstrdup(bn);

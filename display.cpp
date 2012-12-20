@@ -7,11 +7,15 @@
 #define WINDOW_WIDTH 1920
 #define WINDOW_X 0
 #define WINDOW_Y 0
-#define LINEY (((float)(2*LINESIZE)/(float)WINDOW_HEIGHT)-1.0)
+#define LINEY (((float)(LINESIZE)/(float)WINDOW_HEIGHT)-1.0)
 #define MAG(n) ((((float)(n)/SMAX)>1)?1:((float)(n)/SMAX))
+#define RPIX(c, n) ((((c)>>2)&0x1)?(n):0)
+#define GPIX(c, n) ((((c)>>1)&0x1)?(n):0)
+#define BPIX(c, n) (((c)&0x1)?(n):0)
 
-void Display::update(int *spectrum, int size)
+void Display::update(int *spectrum, unsigned char *colors, int size)
 {
+    unsigned char c;
     int i, j;
     float n, dx = 2.0/(float)size;
 
@@ -27,7 +31,8 @@ void Display::update(int *spectrum, int size)
     for(i = 0; i < size; i++)
     {
         n = MAG(spectrum[i]);
-        glColor3f(0,n,0);
+        c = colors[i];
+        glColor3f(RPIX(c, n),GPIX(c, n), BPIX(c, n));
         glVertex2f((i*dx)-1, -1);
         glVertex2f(((i+1)*dx)-1, -1);
     }

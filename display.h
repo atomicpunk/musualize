@@ -9,7 +9,7 @@ public:
     ~Display();
 
     static Display* create();
-    void update(int *spectrum, int size);
+    void update(int *spectrum, unsigned char *colors, int size);
 private:
     int ignore;
 };
