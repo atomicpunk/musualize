@@ -45,43 +45,46 @@ Tone::Tone(float f, int samplerate, char *win) :
     float theta = 2.0 * M_PI * f / (float)samplerate;
     realW = 2.0*cos(theta);
     imagW = sin(theta);
-    window = 0;
 #if (DETECTION == 2)
     int ws = f*OUTPUT_DELAY_MSEC/1000;
     if(ws > WAVELENGTHS) ws = WAVELENGTHS;
-    if(ws < 1)
+    if(ws < 2)
     {
         scnt = (int)((float)samplerate / f);
-        scale = scnt*FSCALE*WAVELENGTHS/3;
-    }
-    else if(ws < 2)
-    {
-        scnt = (int)((float)samplerate / f);
-        scale = scnt*FSCALE*WAVELENGTHS/2;
     }
     else
     {
         scnt = (int)(ws * (float)samplerate / f);
-        scale = scnt*FSCALE*WAVELENGTHS/ws;
     }
-#else
+#elif (DETECTION == 1)
     scnt = (int)(WAVELENGTHS * (float)samplerate / f);
-    scale = scnt*FSCALE;
+#else
+    scnt = WAVELENGTHS*(samplerate/1600)*100;
 #endif
+    scale = scnt;
     sidx = scnt;
     avgsum = 0;
     avgnum = 0;
     avgval = 0;
+    window = NULL;
 
     if((win)&&!strcmp(win, "hamming"))
     {
-        window = 0.54 - (0.46 * cos(theta));
-        scale /= 8;
+        window = new float[scnt];
+        for(int i = 0; i < scnt; i++)
+        {
+            theta = 2.0 * M_PI * ((float)i / (float)scnt);
+            window[i] = 0.54 - (0.46 * cos(theta));
+        }
     }
     else if((win)&&!strcmp(win, "blackman"))
     {
-        window = 0.426591 - (.496561*cos(theta)) + (.076848*cos(2.0*theta));
-        scale /= 60;
+        window = new float[scnt];
+        for(int i = 0; i < scnt; i++)
+        {
+            theta = 2.0 * M_PI * ((float)i / (float)scnt);
+            window[i] = 0.426591 - (.496561*cos(theta)) + (.076848*cos(2.0*theta));
+        }
     }
 #else
     Ft(f), Fs(samplerate)
@@ -108,10 +111,13 @@ void Tone::reset()
 }
 
 #ifdef GOERTZEL
-void Tone::iteration(float s)
+void Tone::iteration(float s, int n)
 {
-    //float ws = (window > 0)?(window*s):s;
-    float y = s + (realW*d1) - d2;
+    float y = (realW*d1) - d2;
+    if(window)
+        y += window[n]*s;
+    else
+        y += s;
     d2 = d1;
     d1 = y;
 }
@@ -128,7 +134,7 @@ void Tone::detect(short *data)
     reset();
     for(int i = 0; i < scnt; i++)
     {
-        iteration((float)data[i]);
+        iteration((float)data[i], i);
     }
     avgsum += (int)(magnitude());
     avgnum++;
@@ -182,6 +188,8 @@ int Tone::snapshot()
 
 Tone::~Tone()
 {
+    if(window)
+        delete window;
 }
 
 Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
@@ -197,12 +205,13 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     float f, df = pow(2.0, 1.0/(12.0*tdiv));
     tnum = tdiv*120;
     float *notes = new float[tnum];
-    buffer_size = WAVELENGTHS*(r/1600)*100;
+    scale = 1;
+    buffer_size = WAVELENGTHS*samplerate/LOWFREQ;
     printf("BUFFERSIZE = %d\n", buffer_size);
     buffer = new short[buffer_size];
     transform_idx = buffer_size;
 
-    for(i = 0, f = 27.5; i < 10; i++, f*=2)
+    for(i = 0, f = LOWFREQ; i < 10; i++, f*=2)
     {
         for(j = -9*tdiv; j < 3*tdiv; j++)
         {
@@ -210,9 +219,11 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
         }
     }
 
+    clock_gettime(CLOCK_REALTIME, &lb);
+    beat_duration = (60000000)/128;
     numtones = idx2 - idx1;
     tones = new Tone*[numtones];
-    spectrum = new int[numtones];
+    spectrum = new float[numtones];
     colors = new unsigned char[numtones];
     for(i = idx1; i < idx2; i++)
     {
@@ -298,7 +309,7 @@ void Analyzer::textcolor(int attr, int fg)
     printf("%c[%d;%dm", 0x1B, attr, fg + 30);
 }
 
-void Analyzer::textcolor(int N)
+void Analyzer::textcolor(float N)
 {
     int attr, fg;
 
@@ -360,12 +371,16 @@ void Analyzer::soundinput(unsigned char *data, int size)
 #ifdef GOERTZEL
     for(i = 0; i < numtones; i++)
     {
+#if (DETECTION == 0)
+        tones[i]->sidx = (tones[i]->sidx - N < 0)?0:(tones[i]->sidx - N);
+#else
         tones[i]->sidx = (tones[i]->sidx - N < 0)?0:(tones[i]->sidx - N);
         while(buffer_size - tones[i]->sidx >= tones[i]->scnt)
         {
             tones[i]->detect(&buffer[tones[i]->sidx]);
             tones[i]->sidx += tones[i]->scnt;
         }
+#endif
     }
 #else // NOT GOERTZEL
 /*
@@ -388,7 +403,7 @@ void Analyzer::print()
     for(int i = 0; i < numtones; i++)
     {
         textcolor(spectrum[i]);
-        printf("%3d", spectrum[i]);
+        printf("%1.1f", spectrum[i]);
     }
     printf("\n");
     textcolor(RESET, WHITE);
@@ -398,23 +413,60 @@ void Analyzer::print()
 }
 #endif
 
+bool Analyzer::isBeat() {
+
+    struct timespec tm;
+    clock_gettime(CLOCK_REALTIME, &tm);
+    u_int64_t t1 = (tm.tv_sec*1000000) + (tm.tv_nsec/1000);
+    u_int64_t t2 = (lb.tv_sec*1000000) + (lb.tv_nsec/1000);
+    if(t1 - t2 >= beat_duration)
+    {
+        lb = tm;
+        return true;
+    }
+    return false;
+}
+
 void Analyzer::snapshot()
 {
     for(int i = 0; i < numtones; i++)
     {
-        spectrum[i] = tones[i]->snapshot();
-        if(detectRisingEdge(tones[i]->history))
+#if (DETECTION == 0)
+        tones[i]->scnt = buffer_size - tones[i]->sidx;
+        tones[i]->scale = buffer_size - tones[i]->sidx;
+        tones[i]->detect(&buffer[tones[i]->sidx]);
+        tones[i]->sidx = buffer_size;
+#endif
+        spectrum[i] = (float)(tones[i]->snapshot())/scale;
+        if(spectrum[i] > 2)
+        {
+            scale += SCALEINC;
+            spectrum[i] = 1;
             colors[i] = RED;
+        }
+        else if(spectrum[i] > 1)
+        {
+            spectrum[i] = 1;
+            colors[i] = CYAN;
+        }
         else
+        {
             colors[i] = GREEN;
+        }
+//        if(detectRisingEdge(tones[i]->history))
+//            colors[i] = WHITE;
+//        else
+//            colors[i] = GREEN;
     }
+//    if(isBeat())
+//        colors[0] = 23;
 }
 
 bool Analyzer::detectRisingEdge(int *t)
 {
     for(int i = 0; i < 1; i++)
     {
-        if(t[i] - t[i+1] < 5)
+        if(t[i] - t[i+1] < 10)
             return false;
     }
     return true;

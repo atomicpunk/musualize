@@ -1,6 +1,9 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
+#include <time.h>
+#include <sys/types.h>
+
 class Tone {
 public:
     Tone(float f, int samplerate, char *window);
@@ -12,12 +15,13 @@ public:
 
 #ifdef GOERTZEL
     float magnitude();
-    void iteration(float s);
+    void iteration(float s, int n);
     void detect(short *data);
 
     /* used by analyzer to manage buffering */
     int scnt;
     int sidx;
+    float scale;
 #else
     void print();
     void iteration(int sample);
@@ -30,12 +34,11 @@ private:
     int avgsum;
     int avgnum;
     int avgval;
-    float scale;
     float realW;
     float imagW;
     float d1;
     float d2;
-    float window;
+    float *window;
 #else
     float Fs; // sample frequency
     float Ft; // target frequency
@@ -66,15 +69,16 @@ public:
     static bool tonemap(const char *map, int *div=NULL,
                         int *start=NULL, int *count=NULL);
 
-    int *spectrum;
+    float *spectrum;
     unsigned char *colors;
     int numtones;
 private:
     Tone **tones;
 #ifdef DISPLAYASCII
     void textcolor(int attr, int fg);
-    void textcolor(int N);
+    void textcolor(float N);
 #endif
+    float scale;
     int samplerate;
     int samplesize;
     int numchannels;
@@ -82,6 +86,9 @@ private:
     int buffer_size;
     int transform_idx;
 
+    struct timespec lb;
+    u_int64_t beat_duration;
+    bool isBeat();
     bool detectRisingEdge(int *t);
 };
 
