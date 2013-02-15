@@ -1,6 +1,7 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
+//#define TESTOUTPUT 1
 #define OUTPUT_DELAY_MSEC 5
 #define WAVELENGTHS 16
 
@@ -51,6 +52,7 @@ public:
 
     int *spectrum;
     int numtones;
+    int samples;
 private:
     Tone **tones;
     void textcolor(int attr, int fg);

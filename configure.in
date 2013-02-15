@@ -18,6 +18,7 @@ then
 else
 	CFLAGS="$CFLAGS -O2"
 fi
+CFLAGS="$CFLAGS -std=c++11"
 
 changequote(,)dnl
 if test "x$GCC" = "xyes"; then

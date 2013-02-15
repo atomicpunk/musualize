@@ -24,7 +24,6 @@ void Display::update(int *spectrum, int size)
     }
     glRasterPos2d(-1, LINEY);
     glCopyPixels(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, GL_COLOR);
-
     glBegin(GL_LINES);
     for(i = 0; i < size; i++)
     {
@@ -40,7 +39,7 @@ void Display::update(int *spectrum, int size)
 
 Display::Display()
 {
-    ignore = 100;
+    ignore = 200;
     glutInitDisplayMode(GLUT_SINGLE);
     glutInitWindowPosition(WINDOW_X, WINDOW_Y);
     glutCreateWindow("Musualizer Spectrum");

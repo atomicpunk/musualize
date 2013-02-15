@@ -4,6 +4,7 @@
 #include "analyzer.h"
 #include <math.h>
 #include <stdlib.h>
+
 #define RESET		0
 #define BRIGHT 		1
 #define DIM		2
@@ -105,6 +106,7 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     samplerate(r), samplesize(t), numchannels(n)
 {
     int i, j, idx1, idx2, tdiv, tnum;
+    samples = 0;
 
     if(m)
       tonemap(m, &tdiv, &idx1, &idx2);
@@ -311,6 +313,7 @@ void Analyzer::soundinput(unsigned char *data, int size)
         }
     }
 #endif
+    samples += N;
 }
 
 void Analyzer::snapshot()
@@ -319,6 +322,7 @@ void Analyzer::snapshot()
     {
         spectrum[i] = tones[i]->returnAverage();
     }
+    samples = 0;
 }
 
 void Analyzer::print()
@@ -331,6 +335,7 @@ void Analyzer::print()
     }
     printf("\n");
     textcolor(RESET, WHITE);
+    samples = 0;
 }
 
 Analyzer* Analyzer::create(int samplerate, int samplesize,
