@@ -149,30 +149,16 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
     assert(length > 0);
 
     analyzer->soundinput((unsigned char *)data, length);
-
-/*
-    if (buffer) {
-        buffer = pa_xrealloc(buffer, buffer_length + length);
-        memcpy((uint8_t*) buffer + buffer_length, data, length);
-        buffer_length += length;
-    } else {
-        buffer = pa_xmalloc(length);
-        memcpy(buffer, data, length);
-        buffer_length = length;
-        buffer_index = 0;
-    }
-*/
-
     pa_stream_drop(s);
-}
-
-static void output_callback() {
+    if(analyzer->samples >= (sample_spec.rate * OUTPUT_DELAY_MSEC / 1000))
+    {
 #ifdef DISPLAYASCII
-    analyzer->print();
+        analyzer->print();
 #else
-    analyzer->snapshot();
-    display->update(analyzer->spectrum, analyzer->colors, analyzer->numtones);
+        analyzer->snapshot();
+        display->update(analyzer->spectrum, analyzer->colors, analyzer->numtones);
 #endif
+    }
 }
 
 /* This routine is called whenever the stream state changes */
@@ -476,13 +462,6 @@ static void stdout_callback(pa_mainloop_api*a, pa_io_event *e, int fd, pa_io_eve
         buffer = NULL;
         buffer_length = buffer_index = 0;
     }
-}
-
-/* UNIX signal to quit recieved */
-static void exit_signal_callback(pa_mainloop_api*m, pa_signal_event *e, int sig, void *userdata) {
-    if (verbose)
-        fprintf(stderr, "Got signal, exiting.\n");
-    quit(0);
 }
 
 /* Show the current latency */
@@ -803,34 +782,9 @@ int main(int argc, char *argv[]) {
 
     r = pa_signal_init(mainloop_api);
     assert(r == 0);
-    pa_signal_new(SIGINT, exit_signal_callback, NULL);
-    pa_signal_new(SIGTERM, exit_signal_callback, NULL);
-    if (signal(SIGALRM, (void (*)(int))output_callback) == SIG_ERR) {
-        fprintf(stderr, "Unable to catch SIGALRM");
-        goto quit;
-    }
-    if (setitimer(ITIMER_REAL, &output_timer, NULL) == -1) {
-        fprintf(stderr, "error calling setitimer()");
-        goto quit;
-    }
-
-#ifdef SIGUSR1
-    pa_signal_new(SIGUSR1, sigusr1_signal_callback, NULL);
-#endif
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
-
-/*
-    if (!(stdio_event = mainloop_api->io_new(mainloop_api,
-                                             mode == PLAYBACK ? STDIN_FILENO : STDOUT_FILENO,
-                                             mode == PLAYBACK ? PA_IO_EVENT_INPUT : PA_IO_EVENT_OUTPUT,
-                                             mode == PLAYBACK ? stdin_callback : stdout_callback, NULL))) {
-        fprintf(stderr, "io_new() failed.\n");
-        goto quit;
-    }
-*/
-
     /* Create a new connection context */
     if (!(context = pa_context_new(mainloop_api, client_name))) {
         fprintf(stderr, "pa_context_new() failed.\n");

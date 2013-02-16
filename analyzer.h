@@ -74,6 +74,7 @@ public:
     float *spectrum;
     unsigned char *colors;
     int numtones;
+    int samples;
 private:
     Tone **tones;
 #ifdef DISPLAYASCII

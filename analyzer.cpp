@@ -188,6 +188,7 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     samplerate(r), samplesize(t), numchannels(n)
 {
     int i, j, idx1, idx2, tnum;
+    samples = 0;
 
     if(m)
       tonemap(m, &tdiv, &idx1, &idx2);
@@ -385,6 +386,7 @@ void Analyzer::soundinput(unsigned char *data, int size)
     }
 */
 #endif
+    samples += N;
 }
 
 #ifdef DISPLAYASCII
@@ -458,4 +460,5 @@ void Analyzer::snapshot()
 
 //    if(isBeat())
 //        colors[0] = 23;
+    samples = 0;
 }
