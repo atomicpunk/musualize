@@ -10,8 +10,6 @@ public:
 
     static Display* create();
     void update(float *spectrum, unsigned char *colors, int size);
-private:
-    int ignore;
 };
 
 #endif //DISPLAY_H

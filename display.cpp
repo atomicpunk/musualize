@@ -26,11 +26,6 @@ void Display::update(float *spectrum, unsigned char *colors, int size)
     int i, j;
     float n, dx = 2.0/(float)size;
 
-    if(ignore > 0)
-    {
-        ignore--;
-        return;
-    }
     glRasterPos2d(-1, LINEY);
     glCopyPixels(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, GL_COLOR);
     glBegin(GL_LINES);
@@ -80,7 +75,6 @@ static void keyboard(unsigned char key, int x, int y)
 
 Display::Display()
 {
-    ignore = 200;
     glutInitDisplayMode(GLUT_SINGLE);
     glutInitWindowPosition(WINDOW_X, WINDOW_Y);
     glutCreateWindow("Musualizer Spectrum");

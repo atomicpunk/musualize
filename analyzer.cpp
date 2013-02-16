@@ -200,7 +200,6 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     float *notes = new float[tnum];
     scale = 1;
     buffer_size = WAVELENGTHS*samplerate/LOWFREQ;
-    printf("BUFFERSIZE = %d\n", buffer_size);
     buffer = new short[buffer_size];
     transform_idx = buffer_size;
 
