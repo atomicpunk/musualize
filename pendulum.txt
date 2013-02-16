@@ -1,0 +1,31 @@
+Motion:
+
+[Constants]
+Fs = sample frequency (CONSTANT: determined by 1/samplerate)
+Ft = target frequency (CONSTANT: target tone)
+A = max displacement  (CONSTANT: set for all tones)
+b = damping force     (CONSTANT: set for all tones)
+m = mass              (CONSTANT: set for all tones)
+w0 = resonant angular frequency
+w = angular frequency
+k = restoring force
+
+w0 = 2pi * Ft;
+k = m * w0^2
+w = sqrt( (k / m) - (b / 2m)^2 );
+
+[Inputs]
+x0 = previous position
+v0 = previous velocity
+p0 = previous phase
+
+[Outputs]
+x = horizontal displacement
+v = horizontal velocity
+p = phase angle
+E = total energy
+
+p = 2pi * Ft/Fs + p0;
+x = x0 * e^(-0.5 * (b / m) * 1/Fs) * cos((w * 1/Fs) + p);
+v = -1 * w * e^(-0.5 * (b / m) * 1/Fs) * x0 * sin((w * 1/Fs) + p);
+E = .5 * ((m * v^2) + (k * x^2));

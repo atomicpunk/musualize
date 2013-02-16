@@ -5,6 +5,7 @@ INCLUDES= \
 bin_PROGRAMS=musualizer
 
 musualizer_SOURCES =	\
+        defines.h       \
         analyzer.h      \
         analyzer.cpp    \
         display.h       \

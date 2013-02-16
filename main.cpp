@@ -38,6 +38,7 @@
 
 #include <pulse/pulseaudio.h>
 #include <pulse/rtclock.h>
+#include "defines.h"
 #include "analyzer.h"
 #include "display.h"
 
@@ -148,15 +149,14 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
     assert(length > 0);
 
     analyzer->soundinput((unsigned char *)data, length);
-
     pa_stream_drop(s);
     if(analyzer->samples >= (sample_spec.rate * OUTPUT_DELAY_MSEC / 1000))
     {
-#ifdef TESTOUTPUT
+#ifdef DISPLAYASCII
         analyzer->print();
 #else
         analyzer->snapshot();
-        display->update(analyzer->spectrum, analyzer->numtones);
+        display->update(analyzer->spectrum, analyzer->colors, analyzer->numtones);
 #endif
     }
 }
@@ -762,9 +762,9 @@ int main(int argc, char *argv[]) {
     analyzer = Analyzer::create(sample_spec.rate,
         pa_sample_size_of_format(sample_spec.format),
         sample_spec.channels, window, tonemap);
-#ifndef TESTOUTPUT
+    #ifndef DISPLAYASCII
     display = Display::create();
-#endif
+    #endif
 
     if (!client_name)
         client_name = pa_xstrdup(bn);
@@ -782,23 +782,9 @@ int main(int argc, char *argv[]) {
 
     r = pa_signal_init(mainloop_api);
     assert(r == 0);
-/*
-    if (signal(SIGALRM, (void (*)(int))output_callback) == SIG_ERR) {
-        fprintf(stderr, "Unable to catch SIGALRM");
-        goto quit;
-    }
-    if (setitimer(ITIMER_REAL, &output_timer, NULL) == -1) {
-        fprintf(stderr, "error calling setitimer()");
-        goto quit;
-    }
-*/
-#ifdef SIGUSR1
-    pa_signal_new(SIGUSR1, sigusr1_signal_callback, NULL);
-#endif
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
-
     /* Create a new connection context */
     if (!(context = pa_context_new(mainloop_api, client_name))) {
         fprintf(stderr, "pa_context_new() failed.\n");
