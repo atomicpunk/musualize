@@ -12,8 +12,16 @@
 #define GPIX(c, n) ((((c)>>1)&0x1)?(n):0)
 #define BPIX(c, n) (((c)&0x1)?(n):0)
 
+bool paused = false;
+
 void Display::update(float *spectrum, unsigned char *colors, int size)
 {
+    if(paused)
+    {
+        glutMainLoopEvent();
+        return;
+    }
+
     unsigned char c;
     int i, j;
     float n, dx = 2.0/(float)size;
@@ -48,6 +56,29 @@ void Display::update(float *spectrum, unsigned char *colors, int size)
     glutMainLoopEvent();
 }
 
+static void keyboard(unsigned char key, int x, int y)
+{
+    switch(key) {
+    case 'p': paused = !paused; break;
+    case 'g': primary_color = GREEN; break;
+    case 'b': primary_color = BLUE; break;
+    case 'm': primary_color = MAGENTA; break;
+    case 'w': primary_color = WHITE; break;
+    case 'c': primary_color = CYAN; break;
+    case 'r': primary_color = RED; break;
+    case 'y': primary_color = YELLOW; break;
+    case 'G': highlight_color = GREEN; break;
+    case 'B': highlight_color = BLUE; break;
+    case 'M': highlight_color = MAGENTA; break;
+    case 'W': highlight_color = WHITE; break;
+    case 'C': highlight_color = CYAN; break;
+    case 'R': highlight_color = RED; break;
+    case 'Y': highlight_color = YELLOW; break;
+    default:
+        printf("KEY = %c, %x\n", key, key);
+    }
+}
+
 Display::Display()
 {
     ignore = 100;
@@ -58,6 +89,7 @@ Display::Display()
     glClear(GL_COLOR_BUFFER_BIT);
     glLineWidth(LINESIZE*2);
     glutFullScreen();
+    glutKeyboardFunc(keyboard);
     glutMainLoopEvent();
 }
 

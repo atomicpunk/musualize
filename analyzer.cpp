@@ -6,37 +6,8 @@
 #include <math.h>
 #include <stdlib.h>
 
-#ifdef DISPLAYASCII
-
-#define RESET		0
-#define BRIGHT 		1
-#define DIM		2
-#define UNDERLINE 	3
-#define BLINK		4
-#define REVERSE		7
-#define HIDDEN		8
-
-#define BLACK 		0
-#define RED		1
-#define GREEN		2
-#define YELLOW		3
-#define BLUE		4
-#define MAGENTA		5
-#define CYAN		6
-#define	WHITE		7
-
-#else
-
-#define BLACK 		0
-#define BLUE		1
-#define GREEN		2
-#define CYAN		3
-#define RED		4
-#define MAGENTA		5
-#define YELLOW		6
-#define	WHITE		7
-
-#endif
+unsigned char primary_color = GREEN;
+unsigned char highlight_color = RED;
 
 Tone::Tone(float f, int samplerate, char *win) :
 #ifdef GOERTZEL
@@ -96,6 +67,12 @@ Tone::Tone(float f, int samplerate, char *win) :
         history[i] = 0;
     }
     reset();
+}
+
+Tone::~Tone()
+{
+    if(window)
+        delete window;
 }
 
 void Tone::reset()
@@ -186,16 +163,31 @@ int Tone::snapshot()
 #endif
 }
 
-Tone::~Tone()
+bool Tone::detectRisingEdge(int dF)
 {
-    if(window)
-        delete window;
+    for(int i = 0; i < TONE_HISTORY-1; i++)
+         if(history[i] - history[i+1] < 3)
+            return false;
+    return true;
+}
+
+bool Tone::detectPeak()
+{
+    int i;
+    if(history[1] - history[0] > 0)
+    {
+        for(i = 1; i < TONE_HISTORY-1; i++)
+            if(history[i] <= history[i+1])
+                return false;
+        return true;
+    }
+    return false;
 }
 
 Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     samplerate(r), samplesize(t), numchannels(n)
 {
-    int i, j, idx1, idx2, tdiv, tnum;
+    int i, j, idx1, idx2, tnum;
 
     if(m)
       tonemap(m, &tdiv, &idx1, &idx2);
@@ -427,6 +419,19 @@ bool Analyzer::isBeat() {
     return false;
 }
 
+void Analyzer::colorPeaks()
+{
+    float *s = spectrum, peak = 0;
+    int i;
+    for(i = 0; i < numtones; i++)
+        if(s[i] > peak) peak = s[i];
+
+    peak *= 0.9;
+    for(i = 0; i < numtones; i++)
+        if(s[i] > peak)
+            colors[i] = highlight_color;
+}
+
 void Analyzer::snapshot()
 {
     for(int i = 0; i < numtones; i++)
@@ -438,36 +443,19 @@ void Analyzer::snapshot()
         tones[i]->sidx = buffer_size;
 #endif
         spectrum[i] = (float)(tones[i]->snapshot())/scale;
-        if(spectrum[i] > 2)
+        colors[i] = primary_color;
+
+//        if(tones[i]->detectRisingEdge(scale))
+//            colors[i] = highlight_color;
+
+        if(spectrum[i] > 1)
         {
             scale += SCALEINC;
             spectrum[i] = 1;
-            colors[i] = RED;
         }
-        else if(spectrum[i] > 1)
-        {
-            spectrum[i] = 1;
-            colors[i] = CYAN;
-        }
-        else
-        {
-            colors[i] = GREEN;
-        }
-//        if(detectRisingEdge(tones[i]->history))
-//            colors[i] = WHITE;
-//        else
-//            colors[i] = GREEN;
     }
+    colorPeaks();
+
 //    if(isBeat())
 //        colors[0] = 23;
-}
-
-bool Analyzer::detectRisingEdge(int *t)
-{
-    for(int i = 0; i < 1; i++)
-    {
-        if(t[i] - t[i+1] < 10)
-            return false;
-    }
-    return true;
 }

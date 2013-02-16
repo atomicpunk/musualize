@@ -12,6 +12,8 @@ public:
     void reset();
     int snapshot();
     int history[TONE_HISTORY];
+    bool detectRisingEdge(int dF);
+    bool detectPeak();
 
 #ifdef GOERTZEL
     float magnitude();
@@ -78,6 +80,7 @@ private:
     void textcolor(int attr, int fg);
     void textcolor(float N);
 #endif
+    int tdiv;
     float scale;
     int samplerate;
     int samplesize;
@@ -89,7 +92,7 @@ private:
     struct timespec lb;
     u_int64_t beat_duration;
     bool isBeat();
-    bool detectRisingEdge(int *t);
+    void colorPeaks();
 };
 
 #endif //ANALYZER_H
