@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2013, Todd E Brandt <tebrandt@frontier.com>.
+ *
+ * This program is licensed under the terms and conditions of the
+ * GPL License, version 2.0.  The full text of the GPL License is at
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ *
+ */
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -443,7 +452,7 @@ void Analyzer::snapshot()
         tones[i]->detect(&buffer[tones[i]->sidx]);
         tones[i]->sidx = buffer_size;
 #endif
-        spectrum[i] = (float)(tones[i]->snapshot())/scale;
+        spectrum[i] = (float)(tones[i]->snapshot())*5/scale;
         colors[i] = primary_color;
 
 //        if(tones[i]->detectRisingEdge(scale))

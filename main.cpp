@@ -40,6 +40,7 @@
 #include "defines.h"
 #include "analyzer.h"
 #include "display.h"
+#include "model.h"
 
 #define CLEAR_LINE "\x1B[K"
 
@@ -66,6 +67,7 @@ static size_t latency = 0, process_time=0;
 
 Analyzer *analyzer = NULL;
 Display *display = NULL;
+Model *vesta = NULL;
 
 /* A shortcut for terminating the application */
 static void quit(int ret) {
@@ -423,6 +425,7 @@ int main(int argc, char *argv[]) {
     #ifndef DISPLAYASCII
     display = Display::create();
     #endif
+    vesta = new Model("VESTA.STL");
 
     if (!client_name)
         client_name = pa_xstrdup(bn);

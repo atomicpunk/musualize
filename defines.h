@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2013, Todd E Brandt <tebrandt@frontier.com>.
+ *
+ * This program is licensed under the terms and conditions of the
+ * GPL License, version 2.0.  The full text of the GPL License is at
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ *
+ */
+
 #ifndef DEFINES_H
 #define DEFINES_H
 
@@ -11,8 +20,8 @@
 #define DETECTION 2 // 0 = raw, 1 = avg, 2 = avg+raw
 #define LOWFREQ 27.5
 #define SCALEINC 1
-#define DISPLAYRATE 400
-#define OUTPUT_DELAY_MSEC 20
+#define DISPLAYRATE 800
+#define OUTPUT_DELAY_MSEC 10
 #define WAVELENGTHS 32
 #define LINESIZE ((int)(DISPLAYRATE*OUTPUT_DELAY_MSEC/1000))
 #if (OUTPUT_DELAY_MSEC*DISPLAYRATE > 10000)
