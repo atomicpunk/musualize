@@ -10,9 +10,14 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#define TONE_HISTORY 3
+// display defines
+#define WINDOW_HEIGHT 1080
+#define WINDOW_WIDTH 1920
+#define WINDOW_X 0
+#define WINDOW_Y 0
 
-// which algorithm?
+// analyzer defines
+#define TONE_HISTORY 3
 #define GOERTZEL
 
 #ifdef GOERTZEL // goertzel
@@ -71,5 +76,6 @@
 extern bool paused;
 extern unsigned char primary_color;
 extern unsigned char highlight_color;
+extern int verbose;
 
 #endif //DEFINES_H

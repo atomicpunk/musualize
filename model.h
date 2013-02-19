@@ -12,10 +12,29 @@
 
 #include <string>
 
+class Polygon {
+public:
+    Polygon() {};
+    ~Polygon() {};
+    float facet[3];
+    float vertex[3][3];
+};
+
 class Model {
 public:
     Model(const char* filename);
     ~Model();
+
+    void draw();
+    float scale;
+private:
+    void centerObject();
+    void calculateInitialScale();
+    void calculateUnitVectors();
+    float axismin[3];
+    float axismax[3];
+    int polygon_count;
+    Polygon *polygons;
 };
 
 #endif //MODEL_H

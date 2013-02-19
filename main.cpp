@@ -50,7 +50,7 @@ static pa_mainloop_api *mainloop_api = NULL;
 static void *buffer = NULL;
 static size_t buffer_length = 0, buffer_index = 0;
 static char *stream_name = NULL, *client_name = NULL, *device = NULL;
-static int verbose = 0;
+int verbose = 0;
 static pa_volume_t volume = PA_VOLUME_NORM;
 static int volume_is_set = 0;
 
@@ -66,8 +66,6 @@ static int flags = 0;
 static size_t latency = 0, process_time=0;
 
 Analyzer *analyzer = NULL;
-Display *display = NULL;
-Model *vesta = NULL;
 
 /* A shortcut for terminating the application */
 static void quit(int ret) {
@@ -98,7 +96,7 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
         analyzer->print();
 #else
         analyzer->snapshot();
-        display->update(analyzer->spectrum, analyzer->colors, analyzer->numtones);
+        //Display::analyzerUpdate(analyzer->spectrum, analyzer->colors, analyzer->numtones);
 #endif
     }
 }
@@ -423,9 +421,8 @@ int main(int argc, char *argv[]) {
         pa_sample_size_of_format(sample_spec.format),
         sample_spec.channels, window, tonemap);
     #ifndef DISPLAYASCII
-    display = Display::create();
+    Display::create();
     #endif
-    vesta = new Model("VESTA.STL");
 
     if (!client_name)
         client_name = pa_xstrdup(bn);
@@ -460,12 +457,15 @@ int main(int argc, char *argv[]) {
         goto quit;
     }
 
+#if 1
+    glutMainLoop();
+#else
     /* Run the main loop */
     if (pa_mainloop_run(m, &ret) < 0) {
         fprintf(stderr, "pa_mainloop_run() failed.\n");
         goto quit;
     }
-
+#endif
 quit:
     if (stream)
         pa_stream_unref(stream);
