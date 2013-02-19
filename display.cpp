@@ -49,7 +49,8 @@ Display::Display()
     winWidth = 1280;
     winHeight = 720;
 
-    vesta = new Model("VESTA.STL");
+//    modelmain = new Model("VESTA.STL");
+    modelmain = new Model("spaceshuttle.stl");
 
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(winWidth, winHeight);
@@ -111,7 +112,7 @@ void Display::draw()
         glRotatef(rotation[0], 1.0, 0.0, 0.0);
         glRotatef(rotation[1], 0.0, 1.0, 0.0);
     }
-    vesta->draw();
+    modelmain->draw();
     glutSwapBuffers();
     redraw = false;
 }
@@ -161,9 +162,9 @@ void Display::changeRotation(float xval, float yval)
 
 void Display::changeScale(float val)
 {
-    float newscale = vesta->scale * val;
+    float newscale = modelmain->scale * val;
     if(newscale > 0.01)
-        vesta->scale = newscale;
+        modelmain->scale = newscale;
     redraw = true;
 }
 

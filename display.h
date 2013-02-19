@@ -52,7 +52,7 @@ public:
 private:
     int window;
     float rotation[2];
-    Model *vesta;
+    Model *modelmain;
 };
 
 extern Display *display;
