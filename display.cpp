@@ -78,10 +78,10 @@ Display::Display()
 
     glMatrixMode(GL_MODELVIEW);
     glEnable(GL_LIGHTING);
-    glLightfv(GL_LIGHT1, GL_POSITION, lighting_position);
-    glLightfv(GL_LIGHT1, GL_AMBIENT, lighting_ambient);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, lighting_diffuse); 
-    glEnable (GL_LIGHT1); 
+    glLightfv(GL_LIGHT0, GL_POSITION, lighting_position);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lighting_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lighting_diffuse); 
+    glEnable (GL_LIGHT0); 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     redraw = true;
 }
@@ -162,9 +162,7 @@ void Display::changeRotation(float xval, float yval)
 
 void Display::changeScale(float val)
 {
-    float newscale = modelmain->scale * val;
-    if(newscale > 0.01)
-        modelmain->scale = newscale;
+    modelmain->scale *= val;
     redraw = true;
 }
 
@@ -221,6 +219,8 @@ static void mousePress(int button, int state, int x, int y)
     {
         float ax = (float)mousestate.dy*180.0/display->winHeight;
         float ay = (float)mousestate.dx*180.0/display->winWidth;
+        mousestate.dy = 0;
+        mousestate.dx = 0;
         display->changeRotation(ax, ay);
     }
 }
