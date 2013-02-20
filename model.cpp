@@ -111,7 +111,7 @@ Model::Model(const char *filename)
 
     fp.close();
 
-    centerObject();
+//    centerObject();
     calculateInitialScale();
     calculateUnitVectors();
 

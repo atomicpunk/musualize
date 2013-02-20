@@ -82,7 +82,7 @@ Display::Display()
     glLightfv(GL_LIGHT0, GL_POSITION, lighting_position);
     glLightfv(GL_LIGHT0, GL_AMBIENT, lighting_ambient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lighting_diffuse); 
-    glEnable (GL_LIGHT0); 
+    glEnable (GL_LIGHT0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     redraw = true;
 }
@@ -94,12 +94,12 @@ Display::~Display()
 
 void Display::draw()
 {
-    if(!redraw)
+    if(!redraw || paused)
         return;
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
-    glTranslatef(0, 0, -4);
+    glTranslatef(0, 0, -3);
 
     if(mousestate.buttons[MOUSE_LEFT])
     {
@@ -119,6 +119,32 @@ void Display::draw()
     redraw = false;
 }
 
+void Display::drawPolygon(
+    float x1, float y1, float z1,
+    float x2, float y2, float z2,
+    float x3, float y3, float z3)
+{
+    float vx = (y3-y1)*(z2-z1) - (z3-z1)*(y2-y1);
+    float vy = (z3-z1)*(x2-x1) - (x3-x1)*(z2-z1);
+    float vz = (x3-x1)*(y2-y1) - (y3-y1)*(x2-x1);
+
+    float a = pow(vx, 2) + pow(vy, 2) + pow(vz, 2);
+    if(a > 0)
+    {
+        a = pow((1 / a), 0.5);
+        vx *= a;
+        vy *= a;
+        vz *= a;
+    }
+
+    glBegin(GL_POLYGON);
+    glNormal3f(vx, vy, vz);
+    glVertex3f(x1, y1, z1);
+    glVertex3f(x2, y2, z2);
+    glVertex3f(x3, y3, z3);
+    glEnd();
+}
+
 void Display::drawSpectrum()
 {
     if(analyzer == NULL)
@@ -126,20 +152,47 @@ void Display::drawSpectrum()
 
     float dx = 2.0/(float)analyzer->numtones;
     float dy = 2.0/TONE_HISTORY;
+    int N = analyzer->numtones;
+    float *s = analyzer->spectrum;
 
+#if 0 // lines
     glBegin(GL_LINES);
     for(int i = 0; i < TONE_HISTORY; i++)
     {
         for(int j = 0; j < analyzer->numtones; j++)
         {
             float n = analyzer->spectrum[j+(i*analyzer->numtones)];
-//            glVertex3f((j*dx)-1, (i*dy)-1, n);
-//            glVertex3f(((j+1)*dx)-1, (i*dy)-1, n);
-            glVertex3f(1-(i*dy), 1-(j*dx), n-0.5);
-            glVertex3f(1-(i*dy), 1-((j+1)*dx), n-0.5);
+            glVertex3f(1-(i*dy), 1-(j*dx), n);
+            glVertex3f(1-(i*dy), 1-((j+1)*dx), n);
         }
     }
     glEnd();
+#else
+    for(int i = 0; i < TONE_HISTORY-1; i++)
+    {
+        for(int j = 0; j < N-1; j++)
+        {
+            float x1 = 1-(i*dy);
+            float y1 = 1-(j*dx);
+            float z1 = s[j+(i*N)]-0.3;
+
+            float x2 = 1-(i*dy);
+            float y2 = 1-((j+1)*dx);
+            float z2 = s[j+1+(i*N)]-0.3;
+
+            float x3 = 1-((i+1)*dy);
+            float y3 = 1-(j*dx);
+            float z3 = s[j+((i+1)*N)]-0.3;
+
+            float x4 = 1-((i+1)*dy);
+            float y4 = 1-((j+1)*dx);
+            float z4 = s[j+1+((i+1)*N)]-0.3;
+
+            drawPolygon(x3, y3, z3, x1, y1, z1, x2, y2, z2);
+            drawPolygon(x2, y2, z2, x4, y4, z4, x3, y3, z3);
+        }
+    }
+#endif
 }
 
 void Display::changeRotation(float xval, float yval)

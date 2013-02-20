@@ -31,7 +31,7 @@
 #define LINESIZE ((int)(DISPLAYRATE*OUTPUT_DELAY_MSEC/1000))
 #if (OUTPUT_DELAY_MSEC*DISPLAYRATE > 10000)
 #undef LINESIZE
-#define LINESIZE 5
+#define LINESIZE 1
 #endif
 
 #else // basilar membrane

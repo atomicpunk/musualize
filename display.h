@@ -53,6 +53,8 @@ private:
     int window;
     float rotation[2];
     Model *modelmain;
+    void drawPolygon(float, float, float,
+         float, float, float, float, float, float);
     void drawSpectrum();
 };
 
