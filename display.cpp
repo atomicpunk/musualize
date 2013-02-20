@@ -9,9 +9,9 @@
 
 #include <stdio.h>
 #include "display.h"
+#include "analyzer.h"
 #include "GL/gl.h"
 #include "GL/glext.h"
-#include "defines.h"
 #include <math.h>
 
 #define LINEY (((float)(LINESIZE)/(float)WINDOW_HEIGHT)-1.0)
@@ -27,6 +27,7 @@ enum {
     MOUSE_WHEEL_DOWN
 };
 
+extern Analyzer *analyzer;
 Display *display = NULL;
 MouseState mousestate;
 
@@ -66,7 +67,7 @@ Display::Display()
 
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClearDepth(1.0);
-    glLineWidth(LINESIZE*2);
+    glLineWidth(LINESIZE);
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
@@ -113,44 +114,32 @@ void Display::draw()
         glRotatef(rotation[1], 0.0, 1.0, 0.0);
     }
     modelmain->draw();
+    drawSpectrum();
     glutSwapBuffers();
     redraw = false;
 }
 
-void Display::update(float *spectrum, unsigned char *colors, int size)
+void Display::drawSpectrum()
 {
-    if(paused)
-    {
-        glutMainLoopEvent();
+    if(analyzer == NULL)
         return;
-    }
 
-    unsigned char c;
-    int i, j;
-    float n, dx = 2.0/(float)size;
+    float dx = 2.0/(float)analyzer->numtones;
+    float dy = 2.0/TONE_HISTORY;
 
-    glRasterPos2d(-1, LINEY);
-    glCopyPixels(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, GL_COLOR);
     glBegin(GL_LINES);
-    if(colors[0] == 23)
+    for(int i = 0; i < TONE_HISTORY; i++)
     {
-        size = 0;
-        glColor3f(1, 1, 1);
-        glVertex2f(-1, -1);
-        glVertex2f(1, -1);
-    }
-
-    for(i = 0; i < size; i++)
-    {
-        n = spectrum[i];
-        c = colors[i];
-        glColor3f(RPIX(c, n),GPIX(c, n), BPIX(c, n));
-        glVertex2f((i*dx)-1, -1);
-        glVertex2f(((i+1)*dx)-1, -1);
+        for(int j = 0; j < analyzer->numtones; j++)
+        {
+            float n = analyzer->spectrum[j+(i*analyzer->numtones)];
+//            glVertex3f((j*dx)-1, (i*dy)-1, n);
+//            glVertex3f(((j+1)*dx)-1, (i*dy)-1, n);
+            glVertex3f(1-(i*dy), 1-(j*dx), n-0.5);
+            glVertex3f(1-(i*dy), 1-((j+1)*dx), n-0.5);
+        }
     }
     glEnd();
-    glFlush();
-    glutMainLoopEvent();
 }
 
 void Display::changeRotation(float xval, float yval)
@@ -258,10 +247,9 @@ static void drawScreen()
     display->draw();
 }
 
-void Display::analyzerUpdate(float *spectrum, unsigned char *colors, int size)
+void Display::doRedraw()
 {
-    if(display != NULL)
-        display->update(spectrum, colors, size);
+    display->redraw = true;
 }
 
 void Display::create()

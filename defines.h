@@ -17,7 +17,7 @@
 #define WINDOW_Y 0
 
 // analyzer defines
-#define TONE_HISTORY 3
+#define TONE_HISTORY 200
 #define GOERTZEL
 
 #ifdef GOERTZEL // goertzel
@@ -25,13 +25,13 @@
 #define DETECTION 2 // 0 = raw, 1 = avg, 2 = avg+raw
 #define LOWFREQ 27.5
 #define SCALEINC 1
-#define DISPLAYRATE 800
-#define OUTPUT_DELAY_MSEC 10
+#define DISPLAYRATE 400
+#define OUTPUT_DELAY_MSEC 20
 #define WAVELENGTHS 32
 #define LINESIZE ((int)(DISPLAYRATE*OUTPUT_DELAY_MSEC/1000))
 #if (OUTPUT_DELAY_MSEC*DISPLAYRATE > 10000)
 #undef LINESIZE
-#define LINESIZE 10
+#define LINESIZE 5
 #endif
 
 #else // basilar membrane

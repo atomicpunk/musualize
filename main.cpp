@@ -96,7 +96,7 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata) {
         analyzer->print();
 #else
         analyzer->snapshot();
-        //Display::analyzerUpdate(analyzer->spectrum, analyzer->colors, analyzer->numtones);
+        Display::doRedraw();
 #endif
     }
 }
@@ -195,6 +195,16 @@ static void help(const char *argv0) {
            argv0);
 }
 
+void *pulseMainLoop(void *argument)
+{
+    int ret = 1;
+    pa_mainloop* m = (pa_mainloop*)argument;
+    if (pa_mainloop_run(m, &ret) < 0) {
+        fprintf(stderr, "pa_mainloop_run() failed.\n");
+    }
+    return NULL;
+}
+
 enum {
     ARG_VERSION = 256,
     ARG_STREAM_NAME,
@@ -214,6 +224,7 @@ enum {
 
 int main(int argc, char *argv[]) {
     pa_mainloop* m = NULL;
+    pthread_t pulse_thread;
     int ret = 1, r, c;
     char *bn, *server = NULL, *window = NULL, *tonemap = NULL;
 
@@ -457,15 +468,8 @@ int main(int argc, char *argv[]) {
         goto quit;
     }
 
-#if 1
+    pthread_create(&pulse_thread, NULL, pulseMainLoop, m);
     glutMainLoop();
-#else
-    /* Run the main loop */
-    if (pa_mainloop_run(m, &ret) < 0) {
-        fprintf(stderr, "pa_mainloop_run() failed.\n");
-        goto quit;
-    }
-#endif
 quit:
     if (stream)
         pa_stream_unref(stream);

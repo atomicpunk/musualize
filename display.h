@@ -11,6 +11,7 @@
 #define DISPLAY_H
 
 #include "GL/freeglut.h"
+#include "defines.h"
 #include "model.h"
 
 class MouseState {
@@ -38,11 +39,10 @@ public:
     ~Display();
 
     static void create();
-    static void analyzerUpdate(float *spectrum, unsigned char *colors, int size);
+    static void doRedraw();
 
     void changeScale(float val);
     void changeRotation(float xval, float yval);
-    void update(float *spectrum, unsigned char *colors, int size);
     void draw();
     bool paused;
     bool redraw;
@@ -53,6 +53,7 @@ private:
     int window;
     float rotation[2];
     Model *modelmain;
+    void drawSpectrum();
 };
 
 extern Display *display;

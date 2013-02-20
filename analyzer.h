@@ -20,7 +20,6 @@ public:
 
     void reset();
     int snapshot();
-    int history[TONE_HISTORY];
     bool detectRisingEdge(int dF);
     bool detectPeak();
 

@@ -71,10 +71,6 @@ Tone::Tone(float f, int samplerate, char *win) :
 {
     w = 2 * M_PI * Ft;
 #endif
-    for(int i = 0; i < TONE_HISTORY; i++)
-    {
-        history[i] = 0;
-    }
     reset();
 }
 
@@ -163,8 +159,6 @@ int Tone::snapshot()
         avgsum = 0;
         avgnum = 0;
     }
-    memmove(&history[1], &history[0], (TONE_HISTORY-1)*sizeof(int));
-    history[0] = avgval;
     return avgval;
 #else
     iteration(0);
@@ -172,6 +166,7 @@ int Tone::snapshot()
 #endif
 }
 
+/*
 bool Tone::detectRisingEdge(int dF)
 {
     for(int i = 0; i < TONE_HISTORY-1; i++)
@@ -192,6 +187,7 @@ bool Tone::detectPeak()
     }
     return false;
 }
+*/
 
 Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     samplerate(r), samplesize(t), numchannels(n)
@@ -224,7 +220,8 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     beat_duration = (60000000)/128;
     numtones = idx2 - idx1;
     tones = new Tone*[numtones];
-    spectrum = new float[numtones];
+    spectrum = new float[TONE_HISTORY*numtones];
+
     colors = new unsigned char[numtones];
     for(i = idx1; i < idx2; i++)
     {
@@ -237,9 +234,7 @@ Analyzer::~Analyzer()
 {
     int i;
     for(i = 0; i < numtones; i++)
-    {
         delete tones[i];
-    }
     delete tones;
     delete buffer;
     delete spectrum;
@@ -404,8 +399,8 @@ void Analyzer::print()
     snapshot();
     for(int i = 0; i < numtones; i++)
     {
-        textcolor(spectrum[i]);
-        printf("%1.1f", spectrum[i]);
+        textcolor(spectrum[0][i]);
+        printf("%1.1f", spectrum[0][i]);
     }
     printf("\n");
     textcolor(RESET, WHITE);
@@ -444,6 +439,8 @@ void Analyzer::colorPeaks()
 
 void Analyzer::snapshot()
 {
+    float *s = spectrum;
+    memmove(&spectrum[numtones], &spectrum[0], (TONE_HISTORY-1)*numtones*sizeof(float));
     for(int i = 0; i < numtones; i++)
     {
 #if (DETECTION == 0)
@@ -452,21 +449,13 @@ void Analyzer::snapshot()
         tones[i]->detect(&buffer[tones[i]->sidx]);
         tones[i]->sidx = buffer_size;
 #endif
-        spectrum[i] = (float)(tones[i]->snapshot())*5/scale;
+        s[i] = (float)(tones[i]->snapshot())/scale;
         colors[i] = primary_color;
-
-//        if(tones[i]->detectRisingEdge(scale))
-//            colors[i] = highlight_color;
-
-        if(spectrum[i] > 1)
+        if(s[i] > 1)
         {
             scale += SCALEINC;
-            spectrum[i] = 1;
+            s[i] = 1;
         }
     }
-    colorPeaks();
-
-//    if(isBeat())
-//        colors[0] = 23;
     samples = 0;
 }
