@@ -36,13 +36,15 @@ Tone::Tone(float f, int samplerate, char *win) :
     {
         scnt = (int)(ws * (float)samplerate / f);
     }
+    sidx = scnt;
 #elif (DETECTION == 1)
     scnt = (int)(WAVELENGTHS * (float)samplerate / f);
+    sidx = scnt;
 #else
-    scnt = WAVELENGTHS*(samplerate/1600)*100;
+    scnt = (int)((float)samplerate / f);
+    sidx = 0;
 #endif
     scale = scnt;
-    sidx = scnt;
     avgsum = 0;
     avgnum = 0;
     avgval = 0;
@@ -97,7 +99,7 @@ void Tone::iteration(float s, int n)
 {
     float y = (realW*d1) - d2;
     if(window)
-        y += window[n]*s;
+        y += window[n % scnt]*s;
     else
         y += s;
     d2 = d1;
@@ -153,6 +155,13 @@ void Tone::print()
 int Tone::snapshot()
 {
 #ifdef GOERTZEL
+#if (DETECTION == 0)
+    scale = sidx;
+    sidx = 0;
+    avgval = magnitude();
+    reset();
+    return avgval;
+#else
     if(avgnum > 0)
     {
         avgval = avgsum / avgnum;
@@ -160,6 +169,7 @@ int Tone::snapshot()
         avgnum = 0;
     }
     return avgval;
+#endif
 #else
     iteration(0);
     return x;
@@ -203,7 +213,7 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     float f, df = pow(2.0, 1.0/(12.0*tdiv));
     tnum = tdiv*120;
     float *notes = new float[tnum];
-    scale = 1;
+    scale = 10;
     buffer_size = WAVELENGTHS*samplerate/LOWFREQ;
     buffer = new short[buffer_size];
     transform_idx = buffer_size;
@@ -368,7 +378,8 @@ void Analyzer::soundinput(unsigned char *data, int size)
     for(i = 0; i < numtones; i++)
     {
 #if (DETECTION == 0)
-        tones[i]->sidx = (tones[i]->sidx - N < 0)?0:(tones[i]->sidx - N);
+        for(j = idx; j < buffer_size; j++)
+            tones[i]->iteration(buffer[j], tones[i]->sidx++);
 #else
         tones[i]->sidx = (tones[i]->sidx - N < 0)?0:(tones[i]->sidx - N);
         while(buffer_size - tones[i]->sidx >= tones[i]->scnt)
@@ -443,12 +454,6 @@ void Analyzer::snapshot()
     memmove(&spectrum[numtones], &spectrum[0], (TONE_HISTORY-1)*numtones*sizeof(float));
     for(int i = 0; i < numtones; i++)
     {
-#if (DETECTION == 0)
-        tones[i]->scnt = buffer_size - tones[i]->sidx;
-        tones[i]->scale = buffer_size - tones[i]->sidx;
-        tones[i]->detect(&buffer[tones[i]->sidx]);
-        tones[i]->sidx = buffer_size;
-#endif
         s[i] = (float)(tones[i]->snapshot())/scale;
         colors[i] = primary_color;
         if(s[i] > 1)

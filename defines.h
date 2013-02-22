@@ -22,12 +22,12 @@
 
 #ifdef GOERTZEL // goertzel
 
-#define DETECTION 2 // 0 = raw, 1 = avg, 2 = avg+raw
+#define DETECTION 0 // 0 = raw, 1 = avg, 2 = avg+raw
 #define LOWFREQ 27.5
 #define SCALEINC 1
 #define DISPLAYRATE 400
 #define OUTPUT_DELAY_MSEC 20
-#define WAVELENGTHS 32
+#define WAVELENGTHS 1
 #define LINESIZE ((int)(DISPLAYRATE*OUTPUT_DELAY_MSEC/1000))
 #if (OUTPUT_DELAY_MSEC*DISPLAYRATE > 10000)
 #undef LINESIZE

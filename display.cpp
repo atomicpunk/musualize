@@ -18,6 +18,7 @@
 #define RPIX(c, n) ((((c)>>2)&0x1)?(n):0)
 #define GPIX(c, n) ((((c)>>1)&0x1)?(n):0)
 #define BPIX(c, n) (((c)&0x1)?(n):0)
+//#define MODEL "spaceshuttle.stl"
 
 enum {
     MOUSE_LEFT = 0,
@@ -50,8 +51,9 @@ Display::Display()
     winWidth = 1280;
     winHeight = 720;
 
-//    modelmain = new Model("VESTA.STL");
-    modelmain = new Model("spaceshuttle.stl");
+#ifdef MODEL
+    modelmain = new Model(MODEL);
+#endif
 
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(winWidth, winHeight);
@@ -113,7 +115,9 @@ void Display::draw()
         glRotatef(rotation[0], 1.0, 0.0, 0.0);
         glRotatef(rotation[1], 0.0, 1.0, 0.0);
     }
+#ifdef MODEL
     modelmain->draw();
+#endif
     drawSpectrum();
     glutSwapBuffers();
     redraw = false;
@@ -204,7 +208,9 @@ void Display::changeRotation(float xval, float yval)
 
 void Display::changeScale(float val)
 {
+#ifdef MODEL
     modelmain->scale *= val;
+#endif
     redraw = true;
 }
 
