@@ -229,6 +229,7 @@ static void keyPress(unsigned char key, int x, int y)
     case 'C': highlight_color = CYAN; break;
     case 'R': highlight_color = RED; break;
     case 'Y': highlight_color = YELLOW; break;
+    case 'q': exit(0); break;
     default:
         if(verbose)
             printf("KEY: %c, %x\n", key, key);
