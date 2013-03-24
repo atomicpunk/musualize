@@ -9,16 +9,9 @@
 
 #include <stdio.h>
 #include "display.h"
-#include "analyzer.h"
 #include "GL/gl.h"
 #include "GL/glext.h"
 #include <math.h>
-
-#define LINEY (((float)(LINESIZE)/(float)WINDOW_HEIGHT)-1.0)
-#define RPIX(c, n) ((((c)>>2)&0x1)?(n):0)
-#define GPIX(c, n) ((((c)>>1)&0x1)?(n):0)
-#define BPIX(c, n) (((c)&0x1)?(n):0)
-//#define MODEL "spaceshuttle.stl"
 
 enum {
     MOUSE_LEFT = 0,
@@ -28,7 +21,6 @@ enum {
     MOUSE_WHEEL_DOWN
 };
 
-extern Analyzer *analyzer;
 Display *display = NULL;
 MouseState mousestate;
 
@@ -42,6 +34,9 @@ float lighting_ambient[] =  { 0.1, 0.1, 0.1, 1.0 };
 float lighting_diffuse[] =  { 1.2, 1.2, 1.2, 1.0 };
 float lighting_position[] = { 2.0, 2.0, 0.0, 1.0 };
 
+unsigned char primary_color = GREEN;
+unsigned char highlight_color = RED;
+
 Display::Display()
 {
     paused = false;
@@ -51,14 +46,10 @@ Display::Display()
     winWidth = 1280;
     winHeight = 720;
 
-#ifdef MODEL
-    modelmain = new Model(MODEL);
-#endif
-
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(winWidth, winHeight);
     glutInitWindowPosition(WINDOW_X, WINDOW_Y);
-    window = glutCreateWindow("Musualizer Spectrum");
+    window = glutCreateWindow("Musualizer");
 
     glutDisplayFunc(drawScreen);
     glutIdleFunc(drawScreen);
@@ -94,10 +85,10 @@ Display::~Display()
     glutDestroyWindow(window); 
 }
 
-void Display::draw()
+bool Display::drawstart()
 {
     if(!redraw || paused)
-        return;
+        return false;
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
@@ -115,12 +106,21 @@ void Display::draw()
         glRotatef(rotation[0], 1.0, 0.0, 0.0);
         glRotatef(rotation[1], 0.0, 1.0, 0.0);
     }
-#ifdef MODEL
-    modelmain->draw();
-#endif
-    drawSpectrum();
+    return true;
+}
+
+void Display::drawfinish()
+{
     glutSwapBuffers();
     redraw = false;
+}
+
+void Display::draw()
+{
+    if(!drawstart())
+        return;
+    /* content is drawn here */
+    drawfinish();
 }
 
 void Display::drawPolygon(
@@ -149,82 +149,6 @@ void Display::drawPolygon(
     glEnd();
 }
 
-void Display::drawSpectrum()
-{
-    if(analyzer == NULL)
-        return;
-
-    float *s = analyzer->spectrum;
-#ifdef TONE_HISTORY
-    float dx = 2.0/(float)analyzer->numtones;
-    float dy = 2.0/TONE_HISTORY;
-    int N = analyzer->numtones;
-
-    for(int i = 0; i < TONE_HISTORY-1; i++)
-    {
-        for(int j = 0; j < N-1; j++)
-        {
-            float x1 = 1-(i*dy);
-            float y1 = 1-(j*dx);
-            float z1 = s[j+(i*N)]-0.3;
-
-            float x2 = 1-(i*dy);
-            float y2 = 1-((j+1)*dx);
-            float z2 = s[j+1+(i*N)]-0.3;
-
-            float x3 = 1-((i+1)*dy);
-            float y3 = 1-(j*dx);
-            float z3 = s[j+((i+1)*N)]-0.3;
-
-            float x4 = 1-((i+1)*dy);
-            float y4 = 1-((j+1)*dx);
-            float z4 = s[j+1+((i+1)*N)]-0.3;
-
-            drawPolygon(x3, y3, z3, x1, y1, z1, x2, y2, z2);
-            drawPolygon(x2, y2, z2, x4, y4, z4, x3, y3, z3);
-        }
-    }
-#else
-    int cols = (analyzer->tdiv)*12;
-    int rows = (analyzer->numtones)/cols;
-    float dx = 2.0/(float)cols;
-    float dy = 2.0/(float)rows;
-
-    for(int i = 0; i < rows-1; i++)
-    {
-        for(int j = 0; j < cols-1; j++)
-        {
-            int a = (i * cols) + j;
-            int b = (i * cols) + j + 1;
-            int c = ((i + 1) * cols) + j;
-            int d = ((i + 1) * cols) + j + 1;
-
-            if(d >= analyzer->numtones)
-                return;
-
-            float x1 = (j*dx)-1;
-            float y1 = 1-(i*dy);
-            float z1 = s[a]-0.3;
-
-            float x2 = ((j+1)*dx)-1;
-            float y2 = 1-(i*dy);
-            float z2 = s[b]-0.3;
-
-            float x3 = (j*dx)-1;
-            float y3 = 1-((i+1)*dy);
-            float z3 = s[c]-0.3;
-
-            float x4 = ((j+1)*dx)-1;
-            float y4 = 1-((i+1)*dy);
-            float z4 = s[d]-0.3;
-
-            drawPolygon(x3, y3, z3, x1, y1, z1, x2, y2, z2);
-            drawPolygon(x2, y2, z2, x4, y4, z4, x3, y3, z3);
-        }
-    }
-#endif
-}
-
 void Display::changeRotation(float xval, float yval)
 {
     rotation[0] -= xval;
@@ -234,9 +158,6 @@ void Display::changeRotation(float xval, float yval)
 
 void Display::changeScale(float val)
 {
-#ifdef MODEL
-    modelmain->scale *= val;
-#endif
     redraw = true;
 }
 

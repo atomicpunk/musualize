@@ -25,6 +25,7 @@
 
 #include <signal.h>
 #include <string.h>
+#include <string>
 #include <errno.h>
 #include <unistd.h>
 #include <assert.h>
@@ -35,8 +36,7 @@
 #include <pulse/pulseaudio.h>
 #include "defines.h"
 #include "analyzer.h"
-#include "display.h"
-#include "model.h"
+#include "musicdisplay.h"
 
 static pa_context *context = NULL;
 static pa_stream *stream = NULL;
@@ -343,7 +343,7 @@ int main(int argc, char *argv[]) {
         pa_sample_size_of_format(sample_spec.format),
         sample_spec.channels, window, tonemap);
     #ifndef DISPLAYASCII
-    Display::create();
+    createDisplay();
     #endif
 
     if (!client_name)

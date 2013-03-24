@@ -12,7 +12,6 @@
 
 #include "GL/freeglut.h"
 #include "defines.h"
-#include "model.h"
 
 class MouseState {
 public:
@@ -43,19 +42,21 @@ public:
 
     void changeScale(float val);
     void changeRotation(float xval, float yval);
-    void draw();
+    bool drawstart();
+    void drawfinish();
+    virtual void draw();
     bool paused;
     bool redraw;
     float winWidth;
     float winHeight;
 
+protected:
+    void drawPolygon(float, float, float,
+         float, float, float, float, float, float);
+
 private:
     int window;
     float rotation[2];
-    Model *modelmain;
-    void drawPolygon(float, float, float,
-         float, float, float, float, float, float);
-    void drawSpectrum();
 };
 
 extern Display *display;

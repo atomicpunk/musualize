@@ -15,9 +15,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-unsigned char primary_color = GREEN;
-unsigned char highlight_color = RED;
-
 Tone::Tone(float f, int samplerate, char *win) :
     freq(f)
 {

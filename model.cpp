@@ -38,7 +38,7 @@ Model::Model(const char *filename)
     if(!fp.is_open())
     {
         fprintf(stderr, "Model load failure: %s\n", filename);
-        return;
+        exit(-1);
     }
 
     if(verbose)
