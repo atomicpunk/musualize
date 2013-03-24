@@ -51,8 +51,6 @@ static void *buffer = NULL;
 static size_t buffer_length = 0, buffer_index = 0;
 static char *stream_name = NULL, *client_name = NULL, *device = NULL;
 int verbose = 0;
-static pa_volume_t volume = PA_VOLUME_NORM;
-static int volume_is_set = 0;
 
 static pa_sample_spec sample_spec = {
     PA_SAMPLE_S16LE,
@@ -167,30 +165,17 @@ static void help(const char *argv0) {
     printf("%s [options]\n\n"
            "  -h, --help                            Show this help\n"
            "      --version                         Show version\n\n"
-           "  -r, --record                          Create a connection for recording\n"
-           "  -p, --playback                        Create a connection for playback\n\n"
            "  -v, --verbose                         Enable verbose operations\n\n"
            "  -s, --server=SERVER                   The name of the server to connect to\n"
            "  -d, --device=DEVICE                   The name of the sink/source to connect to\n"
            "  -n, --client-name=NAME                How to call this client on the server\n"
            "      --stream-name=NAME                How to call this stream on the server\n"
-           "      --volume=VOLUME                   Specify the initial (linear) volume in range 0...65536\n"
            "      --rate=SAMPLERATE                 The sample rate in Hz (defaults to 44100)\n"
            "      --format=SAMPLEFORMAT             The sample type, one of s16le, s16be, u8, float32le,\n"
            "                                        float32be, ulaw, alaw, s32le, s32be (defaults to s16ne)\n"
            "      --channels=CHANNELS               The number of channels, 1 for mono, 2 for stereo\n"
            "                                        (defaults to 2)\n"
            "      --channel-map=CHANNELMAP          Channel map to use instead of the default\n"
-           "      --fix-format                      Take the sample format from the sink the stream is\n"
-           "                                        being connected to.\n"
-           "      --fix-rate                        Take the sampling rate from the sink the stream is\n"
-           "                                        being connected to.\n"
-           "      --fix-channels                    Take the number of channels and the channel map\n"
-           "                                        from the sink the stream is being connected to.\n"
-           "      --no-remix                        Don't upmix or downmix channels.\n"
-           "      --no-remap                        Map channels by index instead of name.\n"
-           "      --latency=BYTES                   Request the specified latency in bytes.\n"
-           "      --process-time=BYTES              Request the specified process time per request in bytes.\n"
            ,
            argv0);
 }
@@ -208,18 +193,10 @@ void *pulseMainLoop(void *argument)
 enum {
     ARG_VERSION = 256,
     ARG_STREAM_NAME,
-    ARG_VOLUME,
     ARG_SAMPLERATE,
     ARG_SAMPLEFORMAT,
     ARG_CHANNELS,
-    ARG_CHANNELMAP,
-    ARG_FIX_FORMAT,
-    ARG_FIX_RATE,
-    ARG_FIX_CHANNELS,
-    ARG_NO_REMAP,
-    ARG_NO_REMIX,
-    ARG_LATENCY,
-    ARG_PROCESS_TIME
+    ARG_CHANNELMAP
 };
 
 int main(int argc, char *argv[]) {
@@ -238,18 +215,10 @@ int main(int argc, char *argv[]) {
         {"version",      0, NULL, ARG_VERSION},
         {"help",         0, NULL, 'h'},
         {"verbose",      0, NULL, 'v'},
-        {"volume",       1, NULL, ARG_VOLUME},
         {"rate",         1, NULL, ARG_SAMPLERATE},
         {"format",       1, NULL, ARG_SAMPLEFORMAT},
         {"channels",     1, NULL, ARG_CHANNELS},
         {"channel-map",  1, NULL, ARG_CHANNELMAP},
-        {"fix-format",   0, NULL, ARG_FIX_FORMAT},
-        {"fix-rate",     0, NULL, ARG_FIX_RATE},
-        {"fix-channels", 0, NULL, ARG_FIX_CHANNELS},
-        {"no-remap",     0, NULL, ARG_NO_REMAP},
-        {"no-remix",     0, NULL, ARG_NO_REMIX},
-        {"latency",      1, NULL, ARG_LATENCY},
-        {"process-time", 1, NULL, ARG_PROCESS_TIME},
         {"window",       1, NULL, 'w'},
         {"tonemap",      1, NULL, 't'},
         {NULL,           0, NULL, 0}
@@ -297,13 +266,6 @@ int main(int argc, char *argv[]) {
                 verbose = 1;
                 break;
 
-            case ARG_VOLUME: {
-                int v = atoi(optarg);
-                volume = v < 0 ? 0U : (pa_volume_t) v;
-                volume_is_set = 1;
-                break;
-            }
-
             case ARG_CHANNELS:
                 sample_spec.channels = (uint8_t) atoi(optarg);
                 break;
@@ -323,40 +285,6 @@ int main(int argc, char *argv[]) {
                 }
 
                 channel_map_set = 1;
-                break;
-
-            case ARG_FIX_CHANNELS:
-                flags |= PA_STREAM_FIX_CHANNELS;
-                break;
-
-            case ARG_FIX_RATE:
-                flags |= PA_STREAM_FIX_RATE;
-                break;
-
-            case ARG_FIX_FORMAT:
-                flags |= PA_STREAM_FIX_FORMAT;
-                break;
-
-            case ARG_NO_REMIX:
-                flags |= PA_STREAM_NO_REMIX_CHANNELS;
-                break;
-
-            case ARG_NO_REMAP:
-                flags |= PA_STREAM_NO_REMAP_CHANNELS;
-                break;
-
-            case ARG_LATENCY:
-                if (((latency = (size_t) atoi(optarg))) <= 0) {
-                    fprintf(stderr, "Invalid latency specification '%s'\n", optarg);
-                    goto quit;
-                }
-                break;
-
-            case ARG_PROCESS_TIME:
-                if (((process_time = (size_t) atoi(optarg))) <= 0) {
-                    fprintf(stderr, "Invalid process time specification '%s'\n", optarg);
-                    goto quit;
-                }
                 break;
             case 'w':
                 if(!strcmp(optarg, "hamming")||!strcmp(optarg, "blackman"))
@@ -468,8 +396,15 @@ int main(int argc, char *argv[]) {
         goto quit;
     }
 
+#ifdef DISPLAYASCII
+    if (pa_mainloop_run(m, &ret) < 0) {
+        fprintf(stderr, "pa_mainloop_run() failed.\n");
+        goto quit;
+    }
+#else
     pthread_create(&pulse_thread, NULL, pulseMainLoop, m);
     glutMainLoop();
+#endif
 quit:
     if (stream)
         pa_stream_unref(stream);

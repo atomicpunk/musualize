@@ -18,11 +18,9 @@
 
 // analyzer defines
 //#define TONE_HISTORY 200
-#define GOERTZEL
+//#define DISPLAYASCII
 
-#ifdef GOERTZEL // goertzel
-
-#define DETECTION 0 // 0 = raw, 1 = avg, 2 = avg+raw
+#define DETECTION 2 // 0 = raw, 1 = avg, 2 = avg+raw
 #define LOWFREQ 27.5
 #define SCALEINC 1
 #define DISPLAYRATE 400
@@ -32,13 +30,6 @@
 #if (OUTPUT_DELAY_MSEC*DISPLAYRATE > 10000)
 #undef LINESIZE
 #define LINESIZE 1
-#endif
-
-#else // basilar membrane
-
-#define DISPLAYASCII
-#define DAMPING_FORCE 1
-
 #endif
 
 #ifdef DISPLAYASCII

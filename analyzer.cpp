@@ -19,7 +19,6 @@ unsigned char primary_color = GREEN;
 unsigned char highlight_color = RED;
 
 Tone::Tone(float f, int samplerate, char *win) :
-#ifdef GOERTZEL
     freq(f)
 {
     float theta = 2.0 * M_PI * f / (float)samplerate;
@@ -68,11 +67,6 @@ Tone::Tone(float f, int samplerate, char *win) :
             window[i] = 0.426591 - (.496561*cos(theta)) + (.076848*cos(2.0*theta));
         }
     }
-#else
-    Ft(f), Fs(samplerate)
-{
-    w = 2 * M_PI * Ft;
-#endif
     reset();
 }
 
@@ -84,17 +78,10 @@ Tone::~Tone()
 
 void Tone::reset()
 {
-#ifdef GOERTZEL
     d1 = 0;
     d2 = 0;
-#else
-    t = 0;
-    x = 1;
-    v = 0;
-#endif
 }
 
-#ifdef GOERTZEL
 void Tone::iteration(float s, int n)
 {
     float y = (realW*d1) - d2;
@@ -124,38 +111,9 @@ void Tone::detect(short *data)
     avgsum += (int)(magnitude());
     avgnum++;
 }
-#else
-float Tone::angle(float t)
-{
-    float a = w * t;
-    int i = (int)(a/(2.0*M_PI));
-    float ra = a - ((float)i*2.0*M_PI);
-    if(ra >= M_PI)
-        return (2.0*M_PI) - ra;
-    else
-        return ra;
-}
-
-void Tone::iteration(int sample)
-{
-    // INPUTS t, x, v
-    A = sqrt((x*x) + ((v*v)/(w*w)));
-    p = acos(x/A) - angle(t);
-    t += (1/Fs);
-    x = A*cos(angle(t)+p);
-    v = -1*DAMPING_FORCE*w*A*sin(angle(t)+p);
-}
-
-void Tone::print()
-{
-    iteration(0);
-    printf("t=%.6f\tx=%.6f\tv=%.6f\tA=%.6f\tp=%.6f\n", t, x, v, A, p);
-}
-#endif
 
 int Tone::snapshot()
 {
-#ifdef GOERTZEL
 #if (DETECTION == 0)
     scale = scnt + sidx;
     sidx = 0;
@@ -170,10 +128,6 @@ int Tone::snapshot()
         avgnum = 0;
     }
     return avgval;
-#endif
-#else
-    iteration(0);
-    return x;
 #endif
 }
 
@@ -319,7 +273,7 @@ void Analyzer::textcolor(int attr, int fg)
     printf("%c[%d;%dm", 0x1B, attr, fg + 30);
 }
 
-void Analyzer::textcolor(float N)
+void Analyzer::textcolor(unsigned char N)
 {
     int attr, fg;
 
@@ -328,27 +282,27 @@ void Analyzer::textcolor(float N)
         attr = DIM;
         fg = BLACK;
     }
-    else if(N < 20)
+    else if(N < 40)
     {
         attr = BRIGHT;
         fg = BLUE;
     }
-    else if(N < 40)
+    else if(N < 80)
     {
         attr = BRIGHT;
         fg = MAGENTA;
     }
-    else if(N < 60)
+    else if(N < 120)
     {
         attr = BRIGHT;
         fg = CYAN;
     }
-    else if(N < 80)
+    else if(N < 160)
     {
         attr = BRIGHT;
         fg = GREEN;
     }
-    else if(N < 100)
+    else if(N < 200)
     {
         attr = BRIGHT;
         fg = YELLOW;
@@ -361,6 +315,18 @@ void Analyzer::textcolor(float N)
     printf("%c[%d;%dm", 0x1B, attr, fg + 30);
 }
 
+void Analyzer::print()
+{
+    snapshot();
+    for(int i = 0; i < numtones; i++)
+    {
+        unsigned char n = (unsigned char)(spectrum[i]*200);
+        textcolor(n);
+        printf("%02x ", n);
+    }
+    printf("\n");
+    textcolor(RESET, WHITE);
+}
 #endif
 
 void Analyzer::soundinput(unsigned char *data, int size)
@@ -378,7 +344,6 @@ void Analyzer::soundinput(unsigned char *data, int size)
         buffer[j] = data[(i*2)] | data[(i*2)+1] << 8;
     }
 
-#ifdef GOERTZEL
     for(i = 0; i < numtones; i++)
     {
 #if (DETECTION == 0)
@@ -393,37 +358,8 @@ void Analyzer::soundinput(unsigned char *data, int size)
         }
 #endif
     }
-#else // NOT GOERTZEL
-/*
-    for(i = 0; i < numtones; i++)
-    {
-        for(int j = idx; j < buffer_size; j++)
-        {
-            tones[i]->iteration(buffer[j]);
-        }
-    }
-*/
-#endif
     samples += N;
 }
-
-#ifdef DISPLAYASCII
-void Analyzer::print()
-{
-#ifdef GOERTZEL
-    snapshot();
-    for(int i = 0; i < numtones; i++)
-    {
-        textcolor(spectrum[0][i]);
-        printf("%1.1f", spectrum[0][i]);
-    }
-    printf("\n");
-    textcolor(RESET, WHITE);
-#else
-    tones[456]->print();
-#endif
-}
-#endif
 
 bool Analyzer::isBeat() {
 

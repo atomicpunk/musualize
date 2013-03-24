@@ -23,7 +23,6 @@ public:
     bool detectRisingEdge(int dF);
     bool detectPeak();
 
-#ifdef GOERTZEL
     float magnitude();
     void iteration(float s, int n);
     void detect(short *data);
@@ -32,14 +31,8 @@ public:
     int scnt;
     int sidx;
     float scale;
-#else
-    void print();
-    void iteration(int sample);
-    float angle(float t);
-#endif
 
 private:
-#ifdef GOERTZEL
     float freq;
     int avgsum;
     int avgnum;
@@ -49,17 +42,6 @@ private:
     float d1;
     float d2;
     float *window;
-#else
-    float Fs; // sample frequency
-    float Ft; // target frequency
-    float b;  // damping force
-    float w;  // angular frequency
-    float A;
-    float p;
-    float t;
-    float x;
-    float v;
-#endif
 };
 
 class Analyzer {
@@ -88,7 +70,7 @@ private:
     Tone **tones;
 #ifdef DISPLAYASCII
     void textcolor(int attr, int fg);
-    void textcolor(float N);
+    void textcolor(unsigned char N);
 #endif
     float scale;
     int samplerate;
