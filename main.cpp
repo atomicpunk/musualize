@@ -32,17 +32,11 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <fcntl.h>
-#include <locale.h>
-#include <sys/time.h>
-
 #include <pulse/pulseaudio.h>
-#include <pulse/rtclock.h>
 #include "defines.h"
 #include "analyzer.h"
 #include "display.h"
 #include "model.h"
-
-#define CLEAR_LINE "\x1B[K"
 
 static pa_context *context = NULL;
 static pa_stream *stream = NULL;
@@ -61,7 +55,6 @@ static pa_sample_spec sample_spec = {
 static pa_channel_map channel_map;
 static int channel_map_set = 0;
 static int flags = 0;
-static size_t latency = 0, process_time=0;
 
 Analyzer *analyzer = NULL;
 
@@ -117,7 +110,7 @@ static void context_state_callback(pa_context *c, void *userdata) {
             assert(!stream);
 
             if (verbose)
-                fprintf(stderr, "Connection established.%s \n", CLEAR_LINE);
+                fprintf(stderr, "Connection established.\n");
 
             if (!(stream = pa_stream_new(c, stream_name, &sample_spec, channel_map_set ? &channel_map : NULL))) {
                 fprintf(stderr, "pa_stream_new() failed: %s\n", pa_strerror(pa_context_errno(c)));
@@ -126,17 +119,7 @@ static void context_state_callback(pa_context *c, void *userdata) {
 
             pa_stream_set_read_callback(stream, stream_read_callback, NULL);
 
-            if (latency > 0) {
-                memset(&buffer_attr, 0, sizeof(buffer_attr));
-                buffer_attr.tlength = (uint32_t) latency;
-                buffer_attr.minreq = (uint32_t) process_time;
-                buffer_attr.maxlength = (uint32_t) -1;
-                buffer_attr.prebuf = (uint32_t) -1;
-                buffer_attr.fragsize = (uint32_t) latency;
-                flags |= PA_STREAM_ADJUST_LATENCY;
-            }
-
-            if ((r = pa_stream_connect_record(stream, device, latency > 0 ? &buffer_attr : NULL, (pa_stream_flags_t)flags)) < 0) {
+            if ((r = pa_stream_connect_record(stream, device, NULL, (pa_stream_flags_t)flags)) < 0) {
                 fprintf(stderr, "pa_stream_connect_record() failed: %s\n", pa_strerror(pa_context_errno(c)));
                 goto fail;
             }

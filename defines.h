@@ -17,8 +17,10 @@
 #define WINDOW_Y 0
 
 // analyzer defines
-//#define TONE_HISTORY 200
 //#define DISPLAYASCII
+#ifndef DISPLAYASCII
+#define TONE_HISTORY 200
+#endif
 
 #define DETECTION 2 // 0 = raw, 1 = avg, 2 = avg+raw
 #define LOWFREQ 27.5
