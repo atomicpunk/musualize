@@ -83,13 +83,13 @@ public:
     unsigned char *colors;
     int numtones;
     int samples;
+    int tdiv;
 private:
     Tone **tones;
 #ifdef DISPLAYASCII
     void textcolor(int attr, int fg);
     void textcolor(float N);
 #endif
-    int tdiv;
     float scale;
     int samplerate;
     int samplesize;

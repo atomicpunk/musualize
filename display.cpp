@@ -154,24 +154,12 @@ void Display::drawSpectrum()
     if(analyzer == NULL)
         return;
 
+    float *s = analyzer->spectrum;
+#ifdef TONE_HISTORY
     float dx = 2.0/(float)analyzer->numtones;
     float dy = 2.0/TONE_HISTORY;
     int N = analyzer->numtones;
-    float *s = analyzer->spectrum;
 
-#if 0 // lines
-    glBegin(GL_LINES);
-    for(int i = 0; i < TONE_HISTORY; i++)
-    {
-        for(int j = 0; j < analyzer->numtones; j++)
-        {
-            float n = analyzer->spectrum[j+(i*analyzer->numtones)];
-            glVertex3f(1-(i*dy), 1-(j*dx), n);
-            glVertex3f(1-(i*dy), 1-((j+1)*dx), n);
-        }
-    }
-    glEnd();
-#else
     for(int i = 0; i < TONE_HISTORY-1; i++)
     {
         for(int j = 0; j < N-1; j++)
@@ -191,6 +179,44 @@ void Display::drawSpectrum()
             float x4 = 1-((i+1)*dy);
             float y4 = 1-((j+1)*dx);
             float z4 = s[j+1+((i+1)*N)]-0.3;
+
+            drawPolygon(x3, y3, z3, x1, y1, z1, x2, y2, z2);
+            drawPolygon(x2, y2, z2, x4, y4, z4, x3, y3, z3);
+        }
+    }
+#else
+    int cols = (analyzer->tdiv)*12;
+    int rows = (analyzer->numtones)/cols;
+    float dx = 2.0/(float)cols;
+    float dy = 2.0/(float)rows;
+
+    for(int i = 0; i < rows-1; i++)
+    {
+        for(int j = 0; j < cols-1; j++)
+        {
+            int a = (i * cols) + j;
+            int b = (i * cols) + j + 1;
+            int c = ((i + 1) * cols) + j;
+            int d = ((i + 1) * cols) + j + 1;
+
+            if(d >= analyzer->numtones)
+                return;
+
+            float x1 = (j*dx)-1;
+            float y1 = 1-(i*dy);
+            float z1 = s[a]-0.3;
+
+            float x2 = ((j+1)*dx)-1;
+            float y2 = 1-(i*dy);
+            float z2 = s[b]-0.3;
+
+            float x3 = (j*dx)-1;
+            float y3 = 1-((i+1)*dy);
+            float z3 = s[c]-0.3;
+
+            float x4 = ((j+1)*dx)-1;
+            float y4 = 1-((i+1)*dy);
+            float z4 = s[d]-0.3;
 
             drawPolygon(x3, y3, z3, x1, y1, z1, x2, y2, z2);
             drawPolygon(x2, y2, z2, x4, y4, z4, x3, y3, z3);

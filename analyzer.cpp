@@ -99,9 +99,10 @@ void Tone::iteration(float s, int n)
 {
     float y = (realW*d1) - d2;
     if(window)
-        y += window[n % scnt]*s;
+        y += window[n]*s;
     else
         y += s;
+
     d2 = d1;
     d1 = y;
 }
@@ -156,7 +157,7 @@ int Tone::snapshot()
 {
 #ifdef GOERTZEL
 #if (DETECTION == 0)
-    scale = sidx;
+    scale = scnt + sidx;
     sidx = 0;
     avgval = magnitude();
     reset();
@@ -230,8 +231,11 @@ Analyzer::Analyzer(int r, int t, int n, char *w, char *m) :
     beat_duration = (60000000)/128;
     numtones = idx2 - idx1;
     tones = new Tone*[numtones];
+#ifdef TONE_HISTORY
     spectrum = new float[TONE_HISTORY*numtones];
-
+#else
+    spectrum = new float[numtones];
+#endif
     colors = new unsigned char[numtones];
     for(i = idx1; i < idx2; i++)
     {
@@ -273,7 +277,7 @@ bool Analyzer::tonemap(const char *tmap, int *div, int *start, int *count)
     {
         v[i] = atoi(m);
     }
-    if((v[0] < 1)||(v[0] > 8)||(v[1] < 0)||(v[2] < -1))
+    if((v[0] < 1)||(v[0] > 16)||(v[1] < 0)||(v[2] < -1))
     {
         fprintf(stderr, "tonemap is <1:8>:<0:N-1>:<-1,1:N>");
         free(map);
@@ -451,7 +455,9 @@ void Analyzer::colorPeaks()
 void Analyzer::snapshot()
 {
     float *s = spectrum;
+#ifdef TONE_HISTORY
     memmove(&spectrum[numtones], &spectrum[0], (TONE_HISTORY-1)*numtones*sizeof(float));
+#endif
     for(int i = 0; i < numtones; i++)
     {
         s[i] = (float)(tones[i]->snapshot())/scale;

@@ -17,7 +17,7 @@
 #define WINDOW_Y 0
 
 // analyzer defines
-#define TONE_HISTORY 200
+//#define TONE_HISTORY 200
 #define GOERTZEL
 
 #ifdef GOERTZEL // goertzel
@@ -26,8 +26,8 @@
 #define LOWFREQ 27.5
 #define SCALEINC 1
 #define DISPLAYRATE 400
-#define OUTPUT_DELAY_MSEC 20
-#define WAVELENGTHS 1
+#define OUTPUT_DELAY_MSEC 50
+#define WAVELENGTHS 32
 #define LINESIZE ((int)(DISPLAYRATE*OUTPUT_DELAY_MSEC/1000))
 #if (OUTPUT_DELAY_MSEC*DISPLAYRATE > 10000)
 #undef LINESIZE
