@@ -21,15 +21,7 @@ MusicDisplay::~MusicDisplay()
 {
 }
 
-void MusicDisplay::draw()
-{
-    if(!drawstart())
-        return;
-    drawSpectrum();
-    drawfinish();
-}
-
-void MusicDisplay::drawSpectrum()
+void MusicDisplay::drawContent()
 {
     if(analyzer == NULL)
         return;

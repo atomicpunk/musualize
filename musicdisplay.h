@@ -16,9 +16,7 @@ class MusicDisplay : public Display {
 public:
     MusicDisplay();
     ~MusicDisplay();
-    void draw();
-private:
-    void drawSpectrum();
+    void drawContent();
 };
 
 void createDisplay();

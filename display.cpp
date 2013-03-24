@@ -85,10 +85,10 @@ Display::~Display()
     glutDestroyWindow(window); 
 }
 
-bool Display::drawstart()
+void Display::draw()
 {
     if(!redraw || paused)
-        return false;
+        return;
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
@@ -106,21 +106,15 @@ bool Display::drawstart()
         glRotatef(rotation[0], 1.0, 0.0, 0.0);
         glRotatef(rotation[1], 0.0, 1.0, 0.0);
     }
-    return true;
-}
 
-void Display::drawfinish()
-{
+    drawContent();
     glutSwapBuffers();
     redraw = false;
 }
 
-void Display::draw()
+void Display::drawContent()
 {
-    if(!drawstart())
-        return;
-    /* content is drawn here */
-    drawfinish();
+    /* empty, leave to derived classes */
 }
 
 void Display::drawPolygon(

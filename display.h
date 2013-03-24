@@ -42,9 +42,8 @@ public:
 
     void changeScale(float val);
     void changeRotation(float xval, float yval);
-    bool drawstart();
-    void drawfinish();
-    virtual void draw();
+    virtual void drawContent();
+    void draw();
     bool paused;
     bool redraw;
     float winWidth;

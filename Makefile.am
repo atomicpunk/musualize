@@ -13,8 +13,6 @@ musualizer_SOURCES =	\
         display.cpp     \
         musicdisplay.h  \
         musicdisplay.cpp \
-        model.h         \
-        model.cpp       \
 	main.cpp
 	
 musualizer_LDADD = \

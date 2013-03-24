@@ -17,7 +17,7 @@ class ModelDisplay : public Display {
 public:
     ModelDisplay(char *);
     ~ModelDisplay();
-    void draw();
+    void drawContent();
 private:
     Model *modelmain;
 };

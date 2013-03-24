@@ -20,12 +20,9 @@ ModelDisplay::~ModelDisplay()
 {
 }
 
-void ModelDisplay::draw()
+void ModelDisplay::drawContent()
 {
-    if(!drawstart())
-        return;
     modelmain->draw();
-    drawfinish();
 }
 
 void createDisplay(char *modelfile)
