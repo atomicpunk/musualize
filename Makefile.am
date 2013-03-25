@@ -13,7 +13,7 @@ musualizer_SOURCES =	\
         display.cpp     \
         musicdisplay.h  \
         musicdisplay.cpp \
-	main.cpp
+	main-musualizer.cpp
 	
 musualizer_LDADD = \
 	$(GLU_LIBS) \
@@ -28,7 +28,7 @@ modelview_SOURCES =	\
         modeldisplay.cpp \
         model.h         \
         model.cpp       \
-	modelview.cpp
+	main-modelview.cpp
 
 modelview_LDADD = \
 	$(GLU_LIBS) \
