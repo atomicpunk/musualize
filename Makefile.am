@@ -21,7 +21,7 @@ musualizer_SOURCES =	\
 musualizer_LDADD = \
 	$(GLU_LIBS) \
 	$(GLIB_LIBS) \
-	$(PULSE_LIBS)
+	$(PULSE_LIBS) -lpthread
 
 modelview_SOURCES =	\
         defines.h       \
