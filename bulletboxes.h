@@ -39,10 +39,19 @@ class BulletBoxes : public GlutDemoApplication
 		USE_CCD=1,
 		USE_NO_CCD
 	};
+	enum
+	{
+		SHAPE_BOX=0,
+		SHAPE_CYLINDER,
+		SHAPE_SPHERE,
+		SHAPE_NUM
+	};
 	int m_ccdMode;
         int m_columns;
         int m_rows;
         int m_levels;
+        int m_shape;
+	bool m_randomize;
 	btDefaultCollisionConfiguration* m_collisionConfiguration;
 public:
 	BulletBoxes();
@@ -60,8 +69,8 @@ public:
 	virtual void keyboardCallback(unsigned char key, int x, int y);
 
 	virtual void displayCallback();
-	virtual void	shootBox(const btVector3& destination);
-	virtual void	clientResetScene();
+	virtual void shootBox(const btVector3& destination);
+	virtual void clientResetScene();
 
 	static DemoApplication* Create()
 	{

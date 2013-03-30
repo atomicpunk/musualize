@@ -13,8 +13,10 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#define CUBE_HALF_EXTENTS 1
-#define EXTRA_HEIGHT 1.f
+#define GROUND_HEIGHT 0.f
+#define OBJECT_HALFX 1
+#define OBJECT_HALFY 1
+#define OBJECT_HALFZ 1
 
 #include <stdio.h>
 #include "bulletboxes.h"
@@ -22,7 +24,7 @@ subject to the following restrictions:
 #include "btBulletDynamicsCommon.h"
 
 BulletBoxes::BulletBoxes()
-:m_ccdMode(USE_CCD),m_columns(10),m_rows(10),m_levels(10)
+:m_ccdMode(USE_CCD),m_columns(10),m_rows(10),m_levels(10),m_shape(SHAPE_BOX),m_randomize(true)
 {
 	setDebugMode(btIDebugDraw::DBG_DrawText+btIDebugDraw::DBG_NoHelpText);
 	setCameraDistance(btScalar(40.));
@@ -82,25 +84,36 @@ void	BulletBoxes::initPhysics()
 
 	m_dynamicsWorld->setGravity(btVector3(0,-10,0));
 
-	///create a few basic rigid bodies
-	btBoxShape* box = new btBoxShape(btVector3(btScalar(110.),btScalar(1.),btScalar(110.)));
-//	box->initializePolyhedralFeatures();
-	btCollisionShape* groundShape = box;
-
-//	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),50);
+        // create the ground shape
+#if 0
+        /* a floating rectangular box with GROUND_HEIGHT thickness in Y axis */
+	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(110.),btScalar(GROUND_HEIGHT),btScalar(110.)));
+#else
+        /* transparent 2D plane, X/Z plane of infinite size */
+	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),GROUND_HEIGHT);
+#endif
 	m_collisionShapes.push_back(groundShape);
-	//m_collisionShapes.push_back(new btCylinderShape (btVector3(CUBE_HALF_EXTENTS,CUBE_HALF_EXTENTS,CUBE_HALF_EXTENTS)));
-	m_collisionShapes.push_back(new btBoxShape (btVector3(CUBE_HALF_EXTENTS,CUBE_HALF_EXTENTS,CUBE_HALF_EXTENTS)));
+
+	switch(m_shape)
+	{
+	case SHAPE_SPHERE:
+		m_collisionShapes.push_back(new btSphereShape (btScalar(OBJECT_HALFY)));
+		break;
+	case SHAPE_CYLINDER:
+		m_collisionShapes.push_back(new btCylinderShape (btVector3(OBJECT_HALFX,OBJECT_HALFY,OBJECT_HALFZ)));
+		break;
+	default:
+		m_collisionShapes.push_back(new btBoxShape (btVector3(OBJECT_HALFX,OBJECT_HALFY,OBJECT_HALFZ)));
+	}
 
 	btTransform groundTransform;
 	groundTransform.setIdentity();
 	//groundTransform.setOrigin(btVector3(5,5,5));
 
-	//We can also use DemoApplication::localCreateRigidBody, but for clarity it is provided here:
+        // Create the ground
 	{
+		// if non zero, the ground falls with the boxes
 		btScalar mass(0.);
-
-		//rigidbody is dynamic if and only if mass is non zero, otherwise static
 		bool isDynamic = (mass != 0.f);
 
 		btVector3 localInertia(0,0,0);
@@ -117,17 +130,16 @@ void	BulletBoxes::initPhysics()
 		m_dynamicsWorld->addRigidBody(body);
 	}
 
+    {
+        //create a few dynamic rigidbodies
+        // Re-using the same collision is better for memory usage and performance
 
-	{
-		//create a few dynamic rigidbodies
-		// Re-using the same collision is better for memory usage and performance
+        btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
 
-		btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
+        //btCollisionShape* colShape = new btSphereShape(btScalar(1.));
+        m_collisionShapes.push_back(colShape);
 
-		//btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-		m_collisionShapes.push_back(colShape);
-
-		/// Create Dynamic Objects
+        /// Create Dynamic Objects
 		btTransform startTransform;
 		startTransform.setIdentity();
 
@@ -140,9 +152,12 @@ void	BulletBoxes::initPhysics()
 		if (isDynamic)
 			colShape->calculateLocalInertia(mass,localInertia);
 
-		m_columns = 1 + (rand() % 10);
-		m_rows = 1 + (rand() % 10);
-                m_levels = (10 + (rand() % 91));
+		if(m_randomize)
+		{
+			m_columns = 1 + (rand() % 10);
+			m_rows = 1 + (rand() % 10);
+			m_levels = (10 + (rand() % 91));
+		}
 		int gNumObjects = m_columns*m_rows*m_levels;
                 printf("COLS=%d, ROWS=%d, LEVELS=%d, TOTAL=%d\n",
                     m_columns, m_rows, m_levels, gNumObjects);
@@ -154,13 +169,13 @@ void	BulletBoxes::initPhysics()
 			trans.setIdentity();
 
 			//stack them
-			int level = (i*CUBE_HALF_EXTENTS*2)/(m_columns*m_rows*2*CUBE_HALF_EXTENTS);
+			int level = i/(m_columns*m_rows);
 			int col = (i)%(m_columns)-m_columns/2;
 			int row = (i/m_columns)%(m_rows)-m_rows/2;
 
-                        int x = col*2*CUBE_HALF_EXTENTS;
-                        int z = row*2*CUBE_HALF_EXTENTS;
-                        int y = level*2*CUBE_HALF_EXTENTS+CUBE_HALF_EXTENTS+EXTRA_HEIGHT;
+                        int x = col*2*OBJECT_HALFX;
+                        int z = row*2*OBJECT_HALFZ;
+                        int y = level*2*OBJECT_HALFY+GROUND_HEIGHT;
 			btVector3 pos(x, y, z);
 
 			trans.setOrigin(pos);
@@ -174,41 +189,45 @@ void	BulletBoxes::initPhysics()
 			///when using m_ccdMode
 			if (m_ccdMode==USE_CCD)
 			{
-				body->setCcdMotionThreshold(CUBE_HALF_EXTENTS);
-				body->setCcdSweptSphereRadius(0.9*CUBE_HALF_EXTENTS);
+				body->setCcdMotionThreshold(OBJECT_HALFX);
+				body->setCcdSweptSphereRadius(0.9*OBJECT_HALFX);
 			}
 		}
 	}
+	m_randomize = true;
 }
 
-void	BulletBoxes::clientResetScene()
+void BulletBoxes::clientResetScene()
 {
-	exitPhysics();
-	initPhysics();
+    exitPhysics();
+    initPhysics();
 }
 
 void BulletBoxes::keyboardCallback(unsigned char key, int x, int y)
 {
-	if (key=='p')
-	{
-		switch (m_ccdMode)
-		{
-			case USE_CCD:
-			{
-				m_ccdMode = USE_NO_CCD;
-				break;
-			}
-			case USE_NO_CCD:
-			default:
-			{
-				m_ccdMode = USE_CCD;
-			}
-		};
-		clientResetScene();
-	} else
-	{
-		DemoApplication::keyboardCallback(key,x,y);
-	}
+    if (key=='p')
+    {
+        switch (m_ccdMode)
+        {
+        case USE_CCD:
+            m_ccdMode = USE_NO_CCD;
+            break;
+        case USE_NO_CCD:
+        default:
+            m_ccdMode = USE_CCD;
+        };
+	clientResetScene();
+    }
+    else if (key=='s')
+    {
+        m_shape = (m_shape+1)%SHAPE_NUM;
+        m_randomize = false;
+	clientResetScene();
+    }
+    else
+    {
+        DemoApplication::keyboardCallback(key,x,y);
+    }
 }
 
 void	BulletBoxes::shootBox(const btVector3& destination)
@@ -242,7 +261,7 @@ void	BulletBoxes::shootBox(const btVector3& destination)
 		///when using m_ccdMode, disable regular CCD
 		if (m_ccdMode==USE_CCD)
 		{
-			body->setCcdMotionThreshold(CUBE_HALF_EXTENTS);
+			body->setCcdMotionThreshold(OBJECT_HALFX);
 			body->setCcdSweptSphereRadius(0.4f);
 		}
 	}

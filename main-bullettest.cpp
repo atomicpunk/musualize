@@ -25,7 +25,7 @@ int main(int argc,char** argv)
 	BulletBoxes* bulletboxes = new BulletBoxes();
 	bulletboxes->initPhysics();
 //	bulletboxes->getDynamicsWorld()->setDebugDrawer(&gDebugDrawer);
-	glutmain(argc, argv, 640, 480, "Bullet Boxes", bulletboxes);
+	glutmain(argc, argv, 1920, 1080, "Bullet Boxes", bulletboxes);
 	delete bulletboxes;
 	return 0;
 }
