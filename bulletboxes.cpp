@@ -165,6 +165,8 @@ void    BulletBoxes::initPhysics()
             m_columns, m_rows, m_levels, gNumObjects);
 
         m_tcint = gNumObjects*20;
+        if(m_tcint < TIMER_INTERVAL)
+            m_tcint = TIMER_INTERVAL;
 
         for (int i = 0; i < gNumObjects; i++)
         {
@@ -180,7 +182,8 @@ void    BulletBoxes::initPhysics()
             int x = col*2*OBJECT_HALFX;
             int z = row*2*OBJECT_HALFZ;
             int y = (level*2*OBJECT_HALFY)+GROUND_HEIGHT+DROP_HEIGHT;
-            if(i == 5)
+            /* put one block out of place to crash the pile */
+            if((m_auto)&&(i == 5))
             {
                 x++;
                 z++;
