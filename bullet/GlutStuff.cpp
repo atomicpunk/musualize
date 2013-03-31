@@ -71,7 +71,6 @@ static void glutDisplayCallback(void)
 	gDemoApplication->displayCallback();
 }
 
-
 int glutmain(int argc, char **argv,int width,int height,const char* title,DemoApplication* demoApp) {
     
 	gDemoApplication = demoApp;
@@ -84,7 +83,7 @@ int glutmain(int argc, char **argv,int width,int height,const char* title,DemoAp
 #ifdef BT_USE_FREEGLUT
 	glutSetOption (GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 #endif
-
+    glutFullScreen();
     gDemoApplication->myinit();
 
 	glutKeyboardFunc(glutKeyboardCallback);
@@ -101,7 +100,6 @@ int glutmain(int argc, char **argv,int width,int height,const char* title,DemoAp
 	glutDisplayFunc( glutDisplayCallback );
 
 	glutMoveAndDisplayCallback();
-
 //enable vsync to avoid tearing on Apple (todo: for Windows)
 
 #if defined(__APPLE__) && !defined (VMDMESA)

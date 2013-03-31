@@ -15,16 +15,12 @@ subject to the following restrictions:
 
 #include "bulletboxes.h"
 #include "GlutStuff.h"
-//#include "GLDebugDrawer.h"
 #include "btBulletDynamicsCommon.h"
-
-//GLDebugDrawer	gDebugDrawer;
 
 int main(int argc,char** argv)
 {
 	BulletBoxes* bulletboxes = new BulletBoxes();
 	bulletboxes->initPhysics();
-//	bulletboxes->getDynamicsWorld()->setDebugDrawer(&gDebugDrawer);
 	glutmain(argc, argv, 1920, 1080, "Bullet Boxes", bulletboxes);
 	delete bulletboxes;
 	return 0;

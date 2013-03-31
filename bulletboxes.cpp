@@ -14,20 +14,27 @@ subject to the following restrictions:
 */
 
 #define GROUND_HEIGHT 0.f
+#define DROP_HEIGHT 0.f
 #define OBJECT_HALFX 1
 #define OBJECT_HALFY 1
 #define OBJECT_HALFZ 1
+#define TIMER_INTERVAL 10000
 
 #include <stdio.h>
 #include "bulletboxes.h"
 #include "GlutStuff.h"
 #include "btBulletDynamicsCommon.h"
 
+static BulletBoxes* gBulletBoxes = 0;
+
 BulletBoxes::BulletBoxes()
-:m_ccdMode(USE_CCD),m_columns(10),m_rows(10),m_levels(10),m_shape(SHAPE_BOX),m_randomize(true)
+:m_ccdMode(USE_CCD),
+m_columns(10),m_rows(10),m_levels(10),m_shape(SHAPE_SPHERE),m_randomize(true),
+m_auto(false), m_tcint(TIMER_INTERVAL)
 {
     setDebugMode(btIDebugDraw::DBG_DrawText+btIDebugDraw::DBG_NoHelpText);
-    setCameraDistance(btScalar(40.));
+    setCameraDistance(50.0);
+    gBulletBoxes = this;
 }
 
 void BulletBoxes::clientMoveAndDisplay()
@@ -94,21 +101,22 @@ void    BulletBoxes::initPhysics()
 #endif
     m_collisionShapes.push_back(groundShape);
 
+    btCollisionShape* colShape = NULL;
     switch(m_shape)
     {
     case SHAPE_SPHERE:
-        m_collisionShapes.push_back(new btSphereShape (btScalar(OBJECT_HALFY)));
+        colShape = new btSphereShape (btScalar(OBJECT_HALFY));
         break;
     case SHAPE_CYLINDER:
-        m_collisionShapes.push_back(new btCylinderShape (btVector3(OBJECT_HALFX,OBJECT_HALFY,OBJECT_HALFZ)));
+        colShape = new btCylinderShape (btVector3(OBJECT_HALFX,OBJECT_HALFY,OBJECT_HALFZ));
         break;
     default:
-        m_collisionShapes.push_back(new btBoxShape (btVector3(OBJECT_HALFX,OBJECT_HALFY,OBJECT_HALFZ)));
+        colShape = new btBoxShape (btVector3(OBJECT_HALFX,OBJECT_HALFY,OBJECT_HALFZ));
     }
 
+    m_collisionShapes.push_back(colShape);
     btTransform groundTransform;
     groundTransform.setIdentity();
-    //groundTransform.setOrigin(btVector3(5,5,5));
 
     // Create the ground
     {
@@ -122,24 +130,18 @@ void    BulletBoxes::initPhysics()
 
         //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
         btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,groundShape,localInertia);
-        btRigidBody* body = new btRigidBody(rbInfo);
-        body->setFriction(0.5);
-        //body->setRollingFriction(0.3);
+        btRigidBody::btRigidBodyConstructionInfo gInfo(mass,myMotionState,groundShape,localInertia);
+        gInfo.m_restitution = 0.9f;
+        gInfo.m_friction = 0.0f;
+        btRigidBody* body = new btRigidBody(gInfo);
+//        body->setFriction(0.0);
+        body->setRollingFriction(0.3);
         //add the body to the dynamics world
         m_dynamicsWorld->addRigidBody(body);
     }
 
     {
         //create a few dynamic rigidbodies
-        // Re-using the same collision is better for memory usage and performance
-
-        btCollisionShape* colShape = new btBoxShape(btVector3(OBJECT_HALFX,OBJECT_HALFY,OBJECT_HALFZ));
-
-        //btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-        m_collisionShapes.push_back(colShape);
-
-        /// Create Dynamic Objects
         btTransform startTransform;
         startTransform.setIdentity();
 
@@ -162,9 +164,10 @@ void    BulletBoxes::initPhysics()
         printf("COLS=%d, ROWS=%d, LEVELS=%d, TOTAL=%d\n",
             m_columns, m_rows, m_levels, gNumObjects);
 
+        m_tcint = gNumObjects*20;
+
         for (int i = 0; i < gNumObjects; i++)
         {
-            btCollisionShape* shape = m_collisionShapes[1];
             btTransform trans;
             trans.setIdentity();
 
@@ -173,19 +176,44 @@ void    BulletBoxes::initPhysics()
             int col = (i)%(m_columns)-m_columns/2;
             int row = (i/m_columns)%(m_rows)-m_rows/2;
 
-                        int x = col*2*OBJECT_HALFX;
-                        int z = row*2*OBJECT_HALFZ;
-                        int y = level*2*OBJECT_HALFY+GROUND_HEIGHT;
+            // calculate the xyz of each based on their stack pos
+            int x = col*2*OBJECT_HALFX;
+            int z = row*2*OBJECT_HALFZ;
+            int y = (level*2*OBJECT_HALFY)+GROUND_HEIGHT+DROP_HEIGHT;
+            if(i == 5)
+            {
+                x++;
+                z++;
+            }
+
             btVector3 pos(x, y, z);
 
             trans.setOrigin(pos);
+#if 0
             float mass = 1.f;
+            btRigidBody* body = localCreateRigidBody(mass, trans, colShape);
+#else
+            btDefaultMotionState* myMotionState = new btDefaultMotionState(trans);
+            btRigidBody::btRigidBodyConstructionInfo cInfo(mass,myMotionState,colShape,localInertia);
+            cInfo.m_restitution = 0.9f;
+            cInfo.m_friction = 0.0f;
+            btRigidBody* body = new btRigidBody(cInfo);
+            body->setContactProcessingThreshold(m_defaultContactProcessingThreshold);
+            m_dynamicsWorld->addRigidBody(body);
+#endif
+             body->setAnisotropicFriction(colShape->getAnisotropicRollingFrictionDirection(),
+                                         btCollisionObject::CF_ANISOTROPIC_ROLLING_FRICTION);
+            if(m_shape == SHAPE_SPHERE)
+            {
+                body->setFriction(5.0);
+                body->setRollingFriction(0);
+            }
+            else
+            {
+                body->setFriction(5.);
+            //body->setRollingFriction(0);
+            }
 
-            btRigidBody* body = localCreateRigidBody(mass,trans,shape);
-            body->setAnisotropicFriction(shape->getAnisotropicRollingFrictionDirection(),btCollisionObject::CF_ANISOTROPIC_ROLLING_FRICTION);
-            body->setFriction(0.5);
-
-            //body->setRollingFriction(.3);
             ///when using m_ccdMode
             if (m_ccdMode==USE_CCD)
             {
@@ -223,6 +251,15 @@ void BulletBoxes::keyboardCallback(unsigned char key, int x, int y)
         m_shape = (m_shape+1)%SHAPE_NUM;
         m_randomize = false;
         clientResetScene();
+    }
+    else if (key=='a')
+    {
+        m_auto = !m_auto;
+        if(m_auto)
+        {
+            m_tcint = 100;
+            setTimer();
+        }
     }
     else
     {
@@ -299,4 +336,26 @@ void BulletBoxes::exitPhysics()
     delete m_broadphase;
     delete m_dispatcher;
     delete m_collisionConfiguration;
+}
+
+void BulletBoxes::timerFunc()
+{
+    if(m_auto)
+        clientResetScene();
+}
+
+static int tcval = 0;
+static void glutTimerCallback(int value)
+{
+    if(value != tcval) 
+        return;
+
+    gBulletBoxes->timerFunc();
+    glutTimerFunc(gBulletBoxes->m_tcint, glutTimerCallback, tcval);
+}
+
+void BulletBoxes::setTimer()
+{
+    tcval++;
+    glutTimerFunc(m_tcint, glutTimerCallback, tcval);
 }

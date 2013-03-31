@@ -72,6 +72,7 @@ protected:
 	int	m_mouseButtons;
 public:
 	int	m_modifierKeys;
+        int     m_tcint;
 protected:
 
 	float m_scaleBottom;

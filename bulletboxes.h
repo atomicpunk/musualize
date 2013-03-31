@@ -52,10 +52,12 @@ class BulletBoxes : public GlutDemoApplication
         int m_levels;
         int m_shape;
 	bool m_randomize;
+	bool m_auto;
 	btDefaultCollisionConfiguration* m_collisionConfiguration;
 public:
 	BulletBoxes();
 
+        int m_tcint;
 	virtual ~BulletBoxes()
 	{
 		exitPhysics();
@@ -64,6 +66,8 @@ public:
 
 	void	exitPhysics();
 
+        void setTimer();
+        void timerFunc();
 	virtual void clientMoveAndDisplay();
 
 	virtual void keyboardCallback(unsigned char key, int x, int y);

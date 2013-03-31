@@ -54,19 +54,18 @@ extern int gTotalBytesAlignedAllocs;
 
 #endif //
 
-
 DemoApplication::DemoApplication()
 //see btIDebugDraw.h for modes
 :
 m_dynamicsWorld(0),
 m_pickConstraint(0),
 m_shootBoxShape(0),
-m_cameraDistance(15.0),
+m_cameraDistance(80.0),
 m_debugMode(0),
-m_ele(20.f),
-m_azi(0.f),
-m_cameraPosition(0.f,0.f,0.f),
-m_cameraTargetPosition(0.f,0.f,0.f),
+m_ele(-30.f),
+m_azi(54.f),
+m_cameraPosition(-53.3f,12.4f,-37.4f),
+m_cameraTargetPosition(-10.0f,33.24f,-6.0f),
 m_mouseOldX(0),
 m_mouseOldY(0),
 m_mouseButtons(0),
@@ -75,7 +74,7 @@ m_scaleBottom(0.5f),
 m_scaleFactor(2.f),
 m_cameraUp(0,1,0),
 m_forwardAxis(2),
-m_zoomStepSize(0.4),	
+m_zoomStepSize(0.4),
 m_glutScreenWidth(0),
 m_glutScreenHeight(0),
 m_frustumZNear(1.f),
@@ -85,7 +84,6 @@ m_ShootBoxInitialSpeed(40.f),
 m_stepping(true),
 m_singleStep(false),
 m_idle(false),
-
 m_enableshadows(false),
 m_sundirection(btVector3(1,-2,1)*1000),
 m_defaultContactProcessingThreshold(BT_LARGE_FLOAT)
@@ -181,9 +179,15 @@ void DemoApplication::toggleIdle() {
 
 
 
-
 void DemoApplication::updateCamera() {
 
+/*
+        printf("ele=%f, azi=%f, cp=[%f,%f,%f], ct=[%f,%f,%f], cu=[%f,%f,%f]\n",
+               m_ele, m_azi,
+               m_cameraPosition[0], m_cameraPosition[1], m_cameraPosition[2],
+               m_cameraTargetPosition[0], m_cameraTargetPosition[1], m_cameraTargetPosition[2],
+               m_cameraUp[0], m_cameraUp[1], m_cameraUp[2]);
+*/
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -282,15 +286,6 @@ void DemoApplication::zoomOut()
 	m_cameraDistance += btScalar(m_zoomStepSize); updateCamera(); 
 
 }
-
-
-
-
-
-
-
-
-
 
 void DemoApplication::reshape(int w, int h) 
 {
@@ -958,7 +953,7 @@ void	DemoApplication::mouseMotionFunc(int x,int y)
 		}
 		else if(m_mouseButtons & 1) 
 		{
-			m_azi += dx * btScalar(0.2);
+			m_azi += -1 * dx * btScalar(0.2);
 			m_azi = fmodf(m_azi, btScalar(360.f));
 			m_ele += dy * btScalar(0.2);
 			m_ele = fmodf(m_ele, btScalar(180.f));
@@ -996,19 +991,15 @@ btRigidBody*	DemoApplication::localCreateRigidBody(float mass, const btTransform
 
 	//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
 
-#define USE_MOTIONSTATE 1
-#ifdef USE_MOTIONSTATE
+#if 1
 	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-
 	btRigidBody::btRigidBodyConstructionInfo cInfo(mass,myMotionState,shape,localInertia);
-
 	btRigidBody* body = new btRigidBody(cInfo);
 	body->setContactProcessingThreshold(m_defaultContactProcessingThreshold);
-
 #else
 	btRigidBody* body = new btRigidBody(mass,0,shape,localInertia);	
 	body->setWorldTransform(startTransform);
-#endif//
+#endif
 
 	m_dynamicsWorld->addRigidBody(body);
 
