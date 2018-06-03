@@ -1,0 +1,49 @@
+rhythm detection is a 5 step conversion process:
+
+1) Song -> Amplitude/Time.
+definition:
+- Amplitude: Density offset of sound waves
+- Time: Seconds into the song
+handled by:
+- Human: ear drum
+- computer: microphone or song file
+
+2) Amplitude/Time -> Frequency/Amplitude/Time
+definition:
+- Frequency: sine waves of consistent rate
+- Amplitude: Volume of the frequencies
+- Time: Seconds into the song
+handled by:
+- Human: basilar membrane in the ear
+- computer: FFT loop
+
+3) Frequency/Amplitude/Time -> Sound/Amplitude/Time
+definition:
+- Sound: Collection of frequencies from a single source (e.g. drum, instrument, voice, etc)
+- Amplitude: Volume of the sound
+- Time: Seconds into the song
+handled by:
+- Human: filtering/associative algorithms in the low level brain (no memory required)
+- computer: ???? HARD
+thoughts:
+- a sound can have an overall tone like a piano note, or none at all like a drum beat
+- a sound is made of both frequency & amplitude and their changes over a span of time
+- a short sound's beat usually occurs halfway between beginning and end
+- a long sound's beat either occurs at its start or end
+
+4) Sound/Amplitude/Time -> Rhythm/Amplitude/Time
+definition:
+- Rhythm: Change/occurance rate of a particular sound
+- Amplitude: Dominance of the rhythm (probably equivalent to the dominance of the sound).
+- Time: Seconds into the song
+handled by:
+- Human: predictive algorithm in subconcious cognition
+- computer: ???? MEDIUM - volume/frequency change filter of the whole sound
+
+5) Rhythm/Amplitude/Time -> Dominant Rhythm/Time
+definition:
+- Dominant Rhythm: The rhythm you dance or tap to.
+- Time: Seconds into the song
+handled by:
+- Human: conscious level cognition, we can choose the rhythm we dance to, but one is usually dominant
+- computer: ???? EASY - probably just the loudest, all others likely harmonics
